@@ -57,10 +57,10 @@
 @media(max-width:600px){.action-pad{grid-template-columns:repeat(2,72px);grid-template-rows:repeat(2,72px);gap:7px}.action-btn{font-size:9px}.action-icon{font-size:20px}}
 @media(max-width:390px){.action-pad{grid-template-columns:repeat(2,60px);grid-template-rows:repeat(2,60px);gap:5px}.action-btn{font-size:8px}.action-icon{font-size:17px}}
 </style>
-</head>
+<style>.pk-resumebtn{margin-top:14px;padding:13px 26px;border-radius:12px;border:1px solid #d7b45a;background:linear-gradient(135deg,#2b3d2f,#16241b);color:#f8df91;font-size:13px;font-weight:1000;letter-spacing:1.2px;box-shadow:0 8px 22px #0006;cursor:pointer}.pk-resumebtn:hover{background:linear-gradient(135deg,#3a5340,#1d2f23)}.pk-resumebtn[hidden]{display:none}</style></head>
 <body>
 <div class="app" id="app">
-<section id="pkHome" class="pk-screen"><div class="pk-ball">⚽</div><div class="pk-eyebrow">THE COMPETITIVE FOOTBALL GAME</div><h1>ProKick</h1><p>Build your team. Own the pitch.</p><button id="pkPlay" class="pk-bigbtn">PLAY <span>▶</span></button></section>
+<section id="pkHome" class="pk-screen"><div class="pk-ball">⚽</div><div class="pk-eyebrow">THE COMPETITIVE FOOTBALL GAME</div><h1>ProKick</h1><p>Build your team. Own the pitch.</p><button id="pkPlay" class="pk-bigbtn">PLAY <span>▶</span></button><button id="pkResumeTournament" class="pk-resumebtn" type="button" hidden>🏆 RESUME TOURNAMENT</button></section>
 <section id="pkLeagueSelect" class="pk-screen" hidden>
   <button id="pkLeagueBack" class="pk-back pk-corner-back">← Go Back</button>
   <div class="pk-eyebrow">CHOOSE YOUR COMPETITION</div>
@@ -1904,8 +1904,25 @@ function goHome(){
   if(home){home.hidden=false;home.style.display='flex';home.style.visibility='visible';home.style.opacity='1';}
   document.body.classList.remove('pk-match','pk-setup');
   state.busy=false;
+  window.pkApexInProgress=state.phase==='group'||state.phase==='ko';
+  if(window.pkSyncResume)window.pkSyncResume();
 }
+window.pkResumeApex=function(){
+  if(state.phase!=='group'&&state.phase!=='ko')return false;
+  const home=document.getElementById('pkHome');
+  if(home){home.hidden=true;home.style.display='none';home.style.visibility='';home.style.opacity='';}
+  document.body.classList.remove('pk-match','pk-setup');
+  const root=document.getElementById('apexRoot');
+  if(root){root.hidden=false;root.scrollTop=0;}
+  document.getElementById('axpSetup').hidden=true;
+  document.getElementById('axpStage').hidden=false;
+  document.getElementById('axpMatchModal').hidden=true;
+  renderStage();
+  return true;
+};
 function resetApex(){
+  window.pkApexInProgress=false;
+  if(window.pkSyncResume)window.pkSyncResume();
   state.selected=null;state.group=null;state.groups={};state.phase='setup';
   state.rounds=[];state.roundIndex=0;state.champion=null;state.busy=false;
   $('axpSetup').hidden=false;$('axpStage').hidden=true;
@@ -2038,4 +2055,16 @@ else initApex();
 })();
 </script>
 
+
+<script>
+window.pkSyncResume=function(){
+  const b=document.getElementById('pkResumeTournament');
+  if(b)b.hidden=!window.pkApexInProgress;
+};
+window.addEventListener('DOMContentLoaded',()=>{
+  const b=document.getElementById('pkResumeTournament');
+  if(b)b.addEventListener('click',()=>{if(window.pkResumeApex)window.pkResumeApex();});
+  window.pkSyncResume();
+});
+</script>
 </body></html>
