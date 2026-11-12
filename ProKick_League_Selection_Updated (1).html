@@ -69,6 +69,7 @@
   <div class="pk-modecards pk-league-cards">
     <button class="pk-mode" id="pkBazelLeague"><span>🏆</span><b>Bazel League</b><small>Classic Match, Futsal, or Penalties</small></button>
     <button class="pk-mode" id="pkApexCup" type="button"><span>🌟</span><b>The Apex Cup Tournament</b><small>12 teams · Group stage → Knockouts → Final</small></button>
+    <button class="pk-mode" id="pkTwoVTwoLeague" type="button"><span>👥</span><b>2v2 Super League</b><small>Two players a side · FC Chicken Wings vs Cookers FC</small></button>
   </div>
 </section>
 <section id="pkGameTypes" class="pk-screen" hidden><button id="pkGameTypesBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">CHOOSE YOUR GAME</div><h1>Pick a game mode</h1><p>Choose how you want to play ProKick.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkClassicMatch"><span>🏟️</span><b>Classic Match</b><small>Play a full soccer match</small></button><button class="pk-mode" id="pkFutsal"><span>⚡</span><b>Futsal</b><small>Fast indoor soccer</small></button><button class="pk-mode" id="pkPenalties"><span>🥅</span><b>Penalties</b><small>Test your penalty skills</small></button></div></section>
@@ -99,7 +100,7 @@ const SX=.093,SZ=.108;
 const worldX=x=>(x-W/2)*SX;
 const worldZ=y=>(y-H/2)*SZ;
 let joystickInput={x:0,y:0},runFastHeld=false,joystickPointer=null;
-const teams={chicken:{name:'FC Chicken Wings',color:'#ff941f',dark:'#c85a0a',crest:'🟠',short:'FCW'},dragon:{name:'Dragonwolves FC',color:'#2878ff',dark:'#1645ad',crest:'🔵',short:'DWF'},bears:{name:'Bears FC',color:'#d6a337',dark:'#754c24',crest:'🐻',short:'BFC'}};
+const teams={chicken:{name:'FC Chicken Wings',color:'#ff941f',dark:'#c85a0a',crest:'🟠',short:'FCW'},dragon:{name:'Dragonwolves FC',color:'#2878ff',dark:'#1645ad',crest:'🔵',short:'DWF'},bears:{name:'Bears FC',color:'#d6a337',dark:'#754c24',crest:'🐻',short:'BFC'},cookers:{name:'Cookers FC',color:'#d62839',dark:'#7a1020',crest:'🍳',short:'CKF'}};
 const pkDragonwolvesLogo='data:image/webp;base64,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';
 const pkChickenWingLogo='data:image/webp;base64,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';
 let home='chicken',away='dragon',running=false,started=false,matchEnded=false,goalsA=0,goalsB=0,seconds=0,lastTime=0,toastTimer=0,keys={},lastShot=0;
@@ -366,7 +367,8 @@ update=function(dt){
   const penalty=document.getElementById('pkPenaltyShootout');if(penalty){penalty.hidden=true;penalty.style.display='none';penalty.style.visibility='hidden';penalty.style.pointerEvents='none';penalty.classList.remove('pk-kick-left','pk-kick-center','pk-kick-right','pk-dive-left','pk-dive-right');}
   const victory=document.getElementById('pkPenaltyVictory');if(victory){victory.classList.remove('show');victory.style.display='none';}
   const difficulty=document.getElementById('pkDifficultyModal');if(difficulty)difficulty.hidden=true;
-  const pause=document.getElementById('pauseBtn');if(pause)pause.textContent='Ⅱ Pause';
+  if(window.pkExitTwoVTwo)window.pkExitTwoVTwo();
+ const pause=document.getElementById('pauseBtn');if(pause)pause.textContent='Ⅱ Pause';
   const quickPause=document.getElementById('pkQuickPause');if(quickPause)quickPause.textContent='Ⅱ Pause';
   const countdown=document.getElementById('pkCountdown');if(countdown)countdown.hidden=true;
   if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
@@ -388,6 +390,11 @@ update=function(dt){
  }
 })();
 let futsalMode=false;
+let pkTwoVTwo=false;
+window.pkSetTwoVTwo=function(on){
+ pkTwoVTwo=!!on;
+ setPitchModeVisuals();
+};
 const updateBeforeFutsalDuration=update;
 update=function(dt){
  if(futsalMode&&running&&!matchEnded&&!goalSequence&&seconds+dt>=90){
@@ -409,10 +416,13 @@ const originalMakePlayers=makePlayers;
 makePlayers=function(){
  originalMakePlayers();
  const futsalCoords=[[150,350],[350,230],[350,470],[565,255],[565,445]];
- players.forEach(p=>{const originalTeam=p.team;p.active=!futsalMode||p.n<5;if(futsalMode&&p.active){const baseX=originalTeam===0?futsalCoords[p.n][0]:W-futsalCoords[p.n][0];p.x=p.homeX=W/2+(baseX-W/2)*.52;p.y=p.homeY=H/2+(futsalCoords[p.n][1]-H/2)*.52;}if(!p.active){p.team=-1;p.x=-10000;p.y=-10000;p.homeX=-10000;p.homeY=-10000;}});
- selectedPlayerIndex=futsalMode?4:10;
- p2ControlledIndex=futsalMode?15:20;
- if(futsalMode){ball.owner=3;ball.x=W/2;ball.y=H/2;ball.vx=0;ball.vy=0;}
+ const twoVTwoCoords=[[140,350],[430,350]];
+ const activePerSide=pkTwoVTwo?2:5;
+ const coords=pkTwoVTwo?twoVTwoCoords:futsalCoords;
+ players.forEach(p=>{const originalTeam=p.team;p.active=!futsalMode||p.n<activePerSide;if(futsalMode&&p.active){const baseX=originalTeam===0?coords[p.n][0]:W-coords[p.n][0];p.x=p.homeX=W/2+(baseX-W/2)*.52;p.y=p.homeY=H/2+(coords[p.n][1]-H/2)*.52;}if(!p.active){p.team=-1;p.x=-10000;p.y=-10000;p.homeX=-10000;p.homeY=-10000;}});
+ selectedPlayerIndex=pkTwoVTwo?1:futsalMode?4:10;
+ p2ControlledIndex=pkTwoVTwo?12:futsalMode?15:20;
+ if(futsalMode){ball.owner=pkTwoVTwo?1:3;ball.x=W/2;ball.y=H/2;ball.vx=0;ball.vy=0;}
 };
 const originalMakePlayerObject=makePlayerObject;
 makePlayerObject=function(p){const obj=originalMakePlayerObject(p);obj.group.visible=p.active!==false;obj.numberSprite.visible=p.active!==false;return obj;};
@@ -423,12 +433,13 @@ function setPitchModeVisuals(){
  if(futsalMarkGroup)futsalMarkGroup.visible=futsalMode;
  if(camera){camera.fov=futsalMode?30:12;camera.updateProjectionMatrix();}
  if(scene&&scene.background)scene.background.set(futsalMode?0x46515a:0x9eb8c7);
+ if(futsalMarkGroup&&futsalMarkGroup.children[0]&&futsalMarkGroup.children[0].material)futsalMarkGroup.children[0].material.color.setHex(pkTwoVTwo?0x2e8b57:0xb0783e);
 }
 function setFutsalCourtLines(){
  if(!scene||!window.THREE)return;
  if(!futsalMarkGroup){
   futsalMarkGroup=new THREE.Group();
-  const courtFloor=new THREE.Mesh(new THREE.PlaneGeometry(field.w*SX*.52,field.h*SZ*.52),new THREE.MeshStandardMaterial({color:0xb0783e,roughness:.92}));courtFloor.rotation.x=-Math.PI/2;courtFloor.position.y=-.02;courtFloor.receiveShadow=true;futsalMarkGroup.add(courtFloor);
+  const courtFloor=new THREE.Mesh(new THREE.PlaneGeometry(field.w*SX*.52,field.h*SZ*.52),new THREE.MeshStandardMaterial({color:pkTwoVTwo?0x2e8b57:0xb0783e,roughness:.92}));courtFloor.rotation.x=-Math.PI/2;courtFloor.position.y=-.02;courtFloor.receiveShadow=true;futsalMarkGroup.add(courtFloor);
   const mat=new THREE.LineBasicMaterial({color:0xf7ead5});
   const addCourtLine=(points,closed=true)=>{const g=new THREE.BufferGeometry().setFromPoints(points.map(p=>new THREE.Vector3(p[0],.085,p[1])));const line=closed?new THREE.LineLoop(g,mat):new THREE.Line(g,mat);futsalMarkGroup.add(line);};
   const hx=field.w*SX*.52/2,hz=field.h*SZ*.52/2;
@@ -486,12 +497,12 @@ window.pkSetGameType=function(type){
  futsalMode=type==='futsal';document.body.dataset.gameType=futsalMode?'futsal':'classic';document.body.classList.toggle('pk-futsal-mode',futsalMode);
  renderSignature='';reset();setPitchModeVisuals();setFutsalCourtLines();
  const competition=document.querySelector('.competition'),matchtitle=document.querySelector('.matchtitle'),status=document.querySelector('.status'),squadTitle=document.querySelector('.sidebar .panel:nth-child(2) h2'),footer=document.querySelector('.bottom span:last-child'),fieldPill=document.querySelector('.field-overlay .pill');
- if(competition)competition.textContent=futsalMode?'PROKICK · 5-A-SIDE FUTSAL':'PROKICK · 11-A-SIDE';
- if(matchtitle)matchtitle.textContent=futsalMode?'Quick feet. Fast indoor football.':'Kick off. Make history.';
- if(status)status.innerHTML=futsalMode?'<span class="dot"></span> INDOOR FUTSAL <span style="color:#5e9270">•</span> 03:00 MAX':'<span class="dot"></span> 3D MATCH <span style="color:#5e9270">•</span> 03:00 MAX';
- if(squadTitle)squadTitle.textContent=futsalMode?'Futsal squad · 5':'FC Chicken Wings XI';
- if(footer)footer.textContent=futsalMode?'5-a-side · Indoor court · Three-minute matches':'11-a-side · Three-minute matches · Goal replays';
- if(fieldPill)fieldPill.textContent=futsalMode?'● FUTSAL COURT':'● 3D LIVE MATCH';
+ if(competition)competition.textContent=futsalMode?(pkTwoVTwo?'PROKICK · 2V2 SUPER LEAGUE':'PROKICK · 5-A-SIDE FUTSAL'):'PROKICK · 11-A-SIDE';
+ if(matchtitle)matchtitle.textContent=futsalMode?(pkTwoVTwo?'Two a side. Green pitch. Fast football.':'Quick feet. Fast indoor football.'):'Kick off. Make history.';
+ if(status)status.innerHTML=futsalMode?(pkTwoVTwo?'<span class="dot"></span> 2V2 · TWO A SIDE <span style="color:#5e9270">•</span> 01:30 MAX':'<span class="dot"></span> INDOOR FUTSAL <span style="color:#5e9270">•</span> 03:00 MAX'):'<span class="dot"></span> 3D MATCH <span style="color:#5e9270">•</span> 03:00 MAX';
+ if(squadTitle)squadTitle.textContent=futsalMode?(pkTwoVTwo?'2v2 squad · 2':'Futsal squad · 5'):'FC Chicken Wings XI';
+ if(footer)footer.textContent=futsalMode?(pkTwoVTwo?'2v2 · Two players a side · Green pitch':'5-a-side · Indoor court · Three-minute matches'):'11-a-side · Three-minute matches · Goal replays';
+ if(fieldPill)fieldPill.textContent=futsalMode?(pkTwoVTwo?'● 2V2 GREEN PITCH':'● FUTSAL COURT'):'● 3D LIVE MATCH';
 };
 function reset(){running=false;started=false;matchEnded=false;goalSequence=null;replayFrames=[];replayCapture=0;lastTouchPlayerIndex=-1;lastTouchTeam=-1;replayBanner.classList.remove('show');skipReplayButton.classList.remove('show');document.getElementById('toast').classList.remove('show');toastTimer=0;seconds=0;goalsA=0;goalsB=0;document.getElementById('clock').textContent='00:00';document.getElementById('startBtn').textContent='▶ Start match';document.getElementById('pauseBtn').textContent='Ⅱ Pause';makePlayers();updateTeams();}
 document.getElementById('startBtn').addEventListener('click',()=>{if(matchEnded){showToast('FULL TIME — RESET TO PLAY');return;}running=true;started=true;document.getElementById('startBtn').textContent='▶ Match running';});document.getElementById('pauseBtn').addEventListener('click',()=>{if(goalSequence||matchEnded)return;running=!running;document.getElementById('pauseBtn').textContent=running?'Ⅱ Pause':'▶ Resume';if(running)started=true;});document.getElementById('resetBtn').addEventListener('click',reset);
@@ -1192,7 +1203,7 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
 <script>
 (()=>{
  const logoFor=key=>{const crest=document.getElementById(key==='chicken'?'crestA':key==='dragon'?'crestB':'crestA');const fromCrest=crest?.querySelector('img')?.src;if(fromCrest)return fromCrest;return key==='chicken'?(window.pkChickenWingLogo||''):key==='dragon'?(window.pkDragonLogo||''):key==='bears'?(window.pkBearsLogo||''):'';};
- const nameFor=key=>key==='chicken'?'FC Chicken Wings':key==='dragon'?'Dragonwolves FC':key==='bears'?'Bears FC':key;
+ const nameFor=key=>key==='chicken'?'FC Chicken Wings':key==='dragon'?'Dragonwolves FC':key==='bears'?'Bears FC':key==='cookers'?'Cookers FC':key;
  const liveNames=()=>{const pair=window.pkScoreboardNames;if(Array.isArray(pair)&&pair.length===2&&pair[0]&&pair[1])return pair;return [nameFor(document.getElementById('teamA')?.value||'chicken'),nameFor(document.getElementById('teamB')?.value||'dragon')];};
  const logoKeyFor=label=>({'FC Chicken Wings':'chicken','Dragonwolves FC':'dragon','Bears FC':'bears'})[label]||'';
  function setLogo(node,key,side){if(!node)return;let img=node.querySelector(':scope > .score-team-logo');const src=key?logoFor(key):'';if(!src){if(img)img.remove();return;}if(!img){img=document.createElement('img');img.className='score-team-logo';img.alt=nameFor(key)+' logo';if(side==='left')node.prepend(img);else node.append(img);}if(img.src!==src)img.src=src;img.alt=nameFor(key)+' logo';}
@@ -1216,14 +1227,15 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
   if(type==='futsal'){
    const status=document.querySelector('.status');
    const footer=document.querySelector('.bottom span:last-child');
-   if(status)status.innerHTML='<span class="dot"></span> INDOOR FUTSAL <span style="color:#5e9270">•</span> 01:30 MAX';
-   if(footer)footer.textContent='5-a-side · Indoor court · 1 minute 30 second matches';
+   const twoVTwo=!!window.pkTwoVTwo;
+   if(status)status.innerHTML=twoVTwo?'<span class="dot"></span> 2V2 · TWO A SIDE <span style="color:#5e9270">•</span> 01:30 MAX':'<span class="dot"></span> INDOOR FUTSAL <span style="color:#5e9270">•</span> 01:30 MAX';
+   if(footer)footer.textContent=twoVTwo?'2v2 · Two players a side · Green pitch · 1 minute 30 second matches':'5-a-side · Indoor court · 1 minute 30 second matches';
   }
  };
 })();
 </script>
 <style>
-#pkLeagueSelect .pk-league-cards{grid-template-columns:repeat(2,minmax(0,1fr));width:min(850px,100%)}
+#pkLeagueSelect .pk-league-cards{grid-template-columns:repeat(3,minmax(0,1fr));width:min(1180px,100%)}
 #pkLeagueSelect .pk-mode{min-height:210px}
 #pkLeagueSelect .pk-mode span{font-size:48px}
 #pkLeagueSelect .pk-coming-soon{opacity:.78;cursor:default;position:relative}
@@ -1426,8 +1438,8 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
 (() => {
 'use strict';
 const TEAMS=[
- {id:'fcw',name:'FC Chicken Wings',short:'FCW',strength:78,color:'#f59e0b'},
- {id:'dwf',name:'Dragonwolves FC',short:'DWF',strength:84,color:'#818cf8'},
+ {id:'fcw',name:'FC Chicken Wings',short:'FCW',strength:82,color:'#f59e0b'},
+ {id:'dwf',name:'Dragonwolves FC',short:'DWF',strength:84,color:'#2878ff'},
  {id:'arg',name:'Argens',short:'ARG',strength:72,color:'#22c55e'},
  {id:'brf',name:'Bears FC',short:'BRS',strength:76,color:'#ef4444'},
  {id:'apu',name:'Apex United',short:'APX',strength:88,color:'#eab308'},
@@ -1950,6 +1962,79 @@ function initApex(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initApex);
 else initApex();
+})();
+</script>
+
+<script>
+/* ===== 2v2 SUPER LEAGUE ===== */
+(()=>{
+  const el=id=>document.getElementById(id);
+  const screens=['pkHome','pkLeagueSelect','pkGameTypes','pkModes','pkSetup','pkCountdown'];
+  const onlySides=[['chicken','FC Chicken Wings'],['cookers','Cookers FC']];
+  const allSides=[['chicken','FC Chicken Wings'],['dragon','Dragonwolves FC'],['bears','Bears FC']];
+  const showOnly=id=>screens.forEach(n=>{const s=el(n);if(s)s.hidden=n!==id;});
+  function setTeamOptions(list,first,second){
+    ['teamA','teamB'].forEach((id,i)=>{const sel=el(id);if(!sel)return;sel.innerHTML='';list.forEach(([value,label])=>{const o=document.createElement('option');o.value=value;o.textContent=label;sel.appendChild(o);});sel.value=i===0?first:second;});
+  }
+  function labels(twoVTwo){
+    const comp=document.querySelector('.competition');
+    const title=document.querySelector('.matchtitle');
+    const status=document.querySelector('.status');
+    const footer=document.querySelector('.bottom span:last-child');
+    const pill=document.querySelector('.field-pill');
+    if(comp)comp.textContent=twoVTwo?'PROKICK · 2V2 SUPER LEAGUE':'PROKICK · 5-A-SIDE FUTSAL';
+    if(title)title.textContent=twoVTwo?'Two a side. Green pitch. Fast football.':'Quick feet. Fast indoor football.';
+    if(status)status.innerHTML=twoVTwo?'<span class="dot"></span> 2V2 · TWO A SIDE <span style="color:#5e9270">•</span> 01:30 MAX':'<span class="dot"></span> INDOOR FUTSAL <span style="color:#5e9270">•</span> 01:30 MAX';
+    if(footer)footer.textContent=twoVTwo?'2v2 · Two players a side · Green pitch · 1 minute 30 second matches':'5-a-side · Indoor court · 1 minute 30 second matches';
+    if(pill)pill.textContent=twoVTwo?'● 2V2 GREEN PITCH':'● FUTSAL COURT';
+  }
+  function squad(twoVTwo){
+    const title=document.querySelector('.sidebar .panel:nth-child(2) h2');
+    if(title)title.textContent=twoVTwo?'2v2 squad · 2':'FC Chicken Wings XI';
+    document.querySelectorAll('.sidebar .playerlist .player').forEach((row,i)=>{row.style.display=twoVTwo&&i>1?'none':'';});
+  }
+  function enter(){
+    window.pkTwoVTwo=true;
+    squad(true);
+    if(window.pkSetTwoVTwo)window.pkSetTwoVTwo(true);
+    if(window.pkSetGameType)window.pkSetGameType('futsal');
+    labels(true);
+    setTeamOptions(onlySides,'chicken','cookers');
+    document.body.classList.remove('pk-match','pk-setup');
+    showOnly('pkModes');
+    const help=document.querySelector('.sidebar .panel .help:last-child');
+    if(help)help.textContent='2v2 Super League: two players on each team. Choose 1 Player to face the computer, or 2 Players for a friend.';
+  }
+  window.pkExitTwoVTwo=exit;
+  function exit(){
+    window.pkTwoVTwo=false;
+    if(window.pkSetTwoVTwo)window.pkSetTwoVTwo(false);
+    setTeamOptions(allSides,'chicken','dragon');
+    squad(false);
+  }
+  document.addEventListener('click',event=>{
+    const button=event.target.closest('button');
+    if(!button)return;
+    if(button.id==='pkTwoVTwoLeague'){enter();return;}
+    if(button.id==='pkContinue'&&window.pkTwoVTwo){
+      setTeamOptions(onlySides,'chicken','cookers');
+      return;
+    }
+    if(button.id==='pkStart'&&window.pkTwoVTwo){
+      const apply=el('applyBtn');
+      if(apply)apply.click();
+      return;
+    }
+    if(window.pkTwoVTwo&&['pkPlay','pkBazelLeague','pkApexCup','pkClassicMatch','pkFutsal','pkPenalties','pkBack','pkModesBack','pkGameTypesBack','pkExitGame'].includes(button.id))exit();
+  },true);
+  document.addEventListener('change',event=>{
+    const target=event.target;
+    if(!window.pkTwoVTwo||!target.matches||!target.matches('#teamA,#teamB'))return;
+    const other=target.id==='teamA'?'teamB':'teamA';
+    const sel=el(other);
+    if(sel&&sel.value===target.value){sel.value=target.value==='chicken'?'cookers':'chicken';}
+    event.stopPropagation();
+  },true);
 })();
 </script>
 
