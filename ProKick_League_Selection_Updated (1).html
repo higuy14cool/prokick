@@ -2221,6 +2221,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(!force&&now-lastAt<2200)return;
   lastAt=now;lastText=text;
   line.textContent=text;
+  try{window.dispatchEvent(new CustomEvent('pkCommSay',{detail:text}));}catch(e){}
   box.classList.remove('pk-comm-pop');void box.offsetWidth;box.classList.add('pk-comm-pop');
   recent.push(text);if(recent.length>12)recent.shift();
  }
@@ -2298,6 +2299,58 @@ function nameOf(side){const e=document.getElementById(side==='A'?'nameA':'nameB'
   if(runNow&&performance.now()-idleAt>18000){idleAt=performance.now();say(pick(idle)());}
   prevRunning=runNow;prevEnded=endedNow;
  },300);
+})();
+</script>
+<script>
+/* ===== COMMENTATOR VOICE (Web Speech API) ===== */
+(function(){
+ const synth=('speechSynthesis' in window)?window.speechSynthesis:null;
+ if(!synth||typeof window.SpeechSynthesisUtterance!=='function')return;
+ const box=document.getElementById('pkCommentary');
+ let voice=null,ready=false;
+ function pickVoice(){
+  let vs=[];try{vs=synth.getVoices()||[];}catch(e){vs=[];}
+  if(!vs.length)return;
+  const want=[/google uk english male/i,/google uk english/i,/microsoft (ryan|george|thomas)/i,/daniel/i,/arthur/i,/^en[-_]gb/i,/english \(united kingdom\)/i,/en[-_]gb/i];
+  for(const re of want){const hit=vs.find(v=>re.test(v.name)||re.test(v.lang||''));if(hit){voice=hit;break;}}
+  if(!voice)voice=vs.find(v=>/^en/i.test(v.lang||''))||vs[0];
+  ready=true;
+ }
+ pickVoice();
+ try{synth.addEventListener('voiceschanged',pickVoice);}catch(e){}
+ try{synth.onvoiceschanged=pickVoice;}catch(e){}
+ function voiced(text){
+  return String(text)
+   .replace(/(\d)\s*[–—-]\s*(\d)/g,'$1 to $2')
+   .replace(/[—–]/g,', ')
+   .replace(/[′’]/g,'')
+   .replace(/\bFC\b/g,'')
+   .replace(/\bvs\b/gi,'versus')
+   .replace(/[⚽🎙️🏆🧤]/g,'')
+   .replace(/\s+/g,' ')
+   .trim();
+ }
+ function speak(text){
+  if(!box||box.classList.contains('pk-comm-off'))return;
+  const t=voiced(text);
+  if(!t)return;
+  try{
+   synth.cancel();
+   const u=new window.SpeechSynthesisUtterance(t);
+   if(!ready)pickVoice();
+   if(voice)u.voice=voice;
+   u.lang=(voice&&voice.lang)||'en-GB';
+   u.rate=1.05;u.pitch=.9;u.volume=1;
+   synth.speak(u);
+  }catch(e){}
+ }
+ window.addEventListener('pkCommSay',e=>{if(e&&e.detail)speak(e.detail);});
+ // Muting the panel stops the voice immediately.
+ const toggle=document.getElementById('pkCommToggle');
+ if(toggle)toggle.addEventListener('click',()=>{
+  if(box&&box.classList.contains('pk-comm-off')){try{synth.cancel();}catch(e){}}
+ });
+ window.pkCommSpeak=speak;
 })();
 </script>
 </body></html>
