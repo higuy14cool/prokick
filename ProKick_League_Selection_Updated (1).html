@@ -160,6 +160,9 @@ function createThreeWorld(){
  ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.68,24,18),new THREE.MeshStandardMaterial({color:0xf7f8f4,roughness:.36}));ballMesh.castShadow=true;scene.add(ballMesh);resizeThree();window.addEventListener('resize',resizeThree);
 }
 function resizeThree(){if(!renderer||!camera)return;const width=canvas.clientWidth||1200,height=canvas.clientHeight||width/1.68;renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();}
+// Keep the 3D view in sync with the canvas box (fullscreen toggle, panel resize, rotation).
+window.pkResizeView=resizeThree;
+if(typeof ResizeObserver!=='undefined'){try{new ResizeObserver(()=>resizeThree()).observe(canvas);}catch(e){}}
 function makeNumberSprite(number){const label=document.createElement('canvas');label.width=128;label.height=128;const c=label.getContext('2d');c.font='900 76px Arial';c.textAlign='center';c.textBaseline='middle';c.lineWidth=9;c.strokeStyle='rgba(8,19,25,.9)';c.strokeText(String(number),64,68);c.fillStyle='#ffffff';c.fillText(String(number),64,68);const texture=new THREE.CanvasTexture(label);texture.colorSpace=THREE.SRGBColorSpace;const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));sprite.scale.set(.88,.88,1);sprite.renderOrder=5;scene.add(sprite);return sprite;}
 function makePlayerObject(p){const t=teams[p.team===0?home:away],group=new THREE.Group();const shirt=new THREE.MeshStandardMaterial({color:t.color,roughness:.68}),shorts=new THREE.MeshStandardMaterial({color:t.dark,roughness:.78}),skin=new THREE.MeshStandardMaterial({color:0xc99570,roughness:.9}),hair=new THREE.MeshStandardMaterial({color:0x3c2b22,roughness:1}),shoe=new THREE.MeshStandardMaterial({color:0x111a18,roughness:.7});function part(geometry,material,x,y,z,cast=true){const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.castShadow=cast;m.receiveShadow=true;group.add(m);return m;}
  part(new THREE.CylinderGeometry(.78,.9,1.55,12),shirt,0,1.78,0);part(new THREE.CylinderGeometry(.72,.8,.58,12),shorts,0,.72,0);
@@ -1034,18 +1037,18 @@ body.pk-match .scoreboard{display:flex;align-items:center;gap:7px}
 .match-quick-actions{display:flex;align-items:center;gap:6px}
 .match-quick-actions button{padding:7px 10px;border:1px solid #b4ed28;border-radius:9px;background:#102a1c;color:#f4ffe5;font-size:10px;font-weight:950;white-space:nowrap}
 #pkFullscreen{border-color:#4ade80;background:#17402a;color:#f0fdf4}
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1{overflow:hidden}
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .topbar,
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .sidebar,
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .bottom,
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .underfield,
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .exit-row{display:none!important}
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .main{display:block!important;width:100%;max-width:none;height:100vh;margin:0;padding:0}
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .game-area{height:100vh;width:100%;margin:0}
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .matchhead{position:absolute;z-index:8;top:10px;left:50%;transform:translateX(-50%);margin:0;gap:8px;padding:8px 12px;border-radius:14px;background:#06150fd9;border:1px solid #ffffff30;white-space:nowrap}
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .field-wrap{position:fixed;inset:0;width:100vw;height:100dvh;border:0;border-radius:0;box-shadow:none;overflow:hidden;z-index:4}
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .field{width:100%;height:100%;aspect-ratio:auto}
-body[data-player-mode="1"].pk-match.pk-fullscreen-p1 .gamepad{z-index:6}
+body.pk-match.pk-fullscreen-p1{overflow:hidden}
+body.pk-match.pk-fullscreen-p1 .topbar,
+body.pk-match.pk-fullscreen-p1 .sidebar,
+body.pk-match.pk-fullscreen-p1 .bottom,
+body.pk-match.pk-fullscreen-p1 .underfield,
+body.pk-match.pk-fullscreen-p1 .exit-row{display:none!important}
+body.pk-match.pk-fullscreen-p1 .main{display:block!important;width:100%;max-width:none;height:100vh;margin:0;padding:0}
+body.pk-match.pk-fullscreen-p1 .game-area{height:100vh;width:100%;margin:0}
+body.pk-match.pk-fullscreen-p1 .matchhead{position:absolute;z-index:8;top:10px;left:50%;transform:translateX(-50%);margin:0;gap:8px;padding:8px 12px;border-radius:14px;background:#06150fd9;border:1px solid #ffffff30;white-space:nowrap}
+body.pk-match.pk-fullscreen-p1 .field-wrap{position:fixed;inset:0;width:100vw;height:100dvh;border:0;border-radius:0;box-shadow:none;overflow:hidden;z-index:4}
+body.pk-match.pk-fullscreen-p1 .field{width:100%;height:100%;aspect-ratio:auto}
+body.pk-match.pk-fullscreen-p1 .gamepad{z-index:6}
 #pkQuickEnd{border-color:#fb7185;background:#3a1118;color:#ffe4e6}
 body[data-player-mode="2"].pk-match .matchhead{left:auto;right:12px;transform:none;top:10px;max-width:calc(100% - 24px);}
 body[data-player-mode="2"].pk-match .matchhead>div:first-child{display:none}
@@ -1076,7 +1079,7 @@ body[data-player-mode="2"].pk-match .field-wrap .gamepad .joystick-wrap{
 </style>
 <script>
 (()=>{
-(()=>{const b=document.getElementById('pkFullscreen');if(!b)return;const update=()=>{const on=document.body.classList.contains('pk-fullscreen-p1')||!!document.fullscreenElement;b.textContent=on?'⤢ Exit Full Screen':'⛶ Full Screen';b.setAttribute('aria-label',on?'Exit fullscreen':'Enter fullscreen');};const toggle=async event=>{event.preventDefault();event.stopPropagation();const on=document.body.classList.contains('pk-fullscreen-p1')||!!document.fullscreenElement;if(on){document.body.classList.remove('pk-fullscreen-p1');if(document.fullscreenElement&&document.exitFullscreen)try{await document.exitFullscreen()}catch(e){}}else{document.body.classList.add('pk-fullscreen-p1');const target=document.documentElement;if(target.requestFullscreen)try{await target.requestFullscreen()}catch(e){/* CSS fullscreen layout remains available if browser fullscreen is blocked. */}}update();};b.addEventListener('click',toggle);document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)document.body.classList.remove('pk-fullscreen-p1');update();});update();})();
+(()=>{const b=document.getElementById('pkFullscreen');if(!b)return;const refit=()=>{const r=()=>{if(typeof window.pkResizeView==='function')window.pkResizeView();};r();requestAnimationFrame(()=>{r();requestAnimationFrame(r);});setTimeout(r,120);setTimeout(r,320);};const update=()=>{const on=document.body.classList.contains('pk-fullscreen-p1')||!!document.fullscreenElement;b.textContent=on?'⤢ Exit Full Screen':'⛶ Full Screen';b.setAttribute('aria-label',on?'Exit fullscreen':'Enter fullscreen');};const toggle=async event=>{event.preventDefault();event.stopPropagation();const on=document.body.classList.contains('pk-fullscreen-p1')||!!document.fullscreenElement;if(on){document.body.classList.remove('pk-fullscreen-p1');if(document.fullscreenElement&&document.exitFullscreen)try{await document.exitFullscreen()}catch(e){}}else{document.body.classList.add('pk-fullscreen-p1');const target=document.documentElement;if(target.requestFullscreen)try{await target.requestFullscreen()}catch(e){/* CSS fullscreen layout remains available if browser fullscreen is blocked. */}}update();refit();};b.addEventListener('click',toggle);document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement)document.body.classList.remove('pk-fullscreen-p1');update();refit();});window.addEventListener('resize',refit);update();})();
  const pause=document.getElementById('pkQuickPause'),end=document.getElementById('pkQuickEnd'),oldPause=document.getElementById('pauseBtn');
  if(pause&&oldPause)pause.addEventListener('click',()=>{oldPause.click();pause.textContent=oldPause.textContent.includes('Resume')?'▶ Resume':'Ⅱ Pause'});
  if(end)end.addEventListener('click',()=>{document.getElementById('pkExitGame').click()});
