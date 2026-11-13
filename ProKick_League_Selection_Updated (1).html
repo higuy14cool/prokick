@@ -2208,20 +2208,24 @@ window.addEventListener('DOMContentLoaded',()=>{
    .trim();
  }
  let lastSpoken='',lastAt=0;
- function say(text,urgent){
+ // modes: 'loud' = goals / near misses (slower, higher, full volume, dramatic),
+ //        'big' = kick-off, full time, shots,  'calm' = filler.
+ const VOICE={loud:{rate:1.06,pitch:1.2,vol:1},big:{rate:1.12,pitch:1.05,vol:.95},calm:{rate:1.16,pitch:.9,vol:.8}};
+ function say(text,mode){
   const t=voiced(text);
   if(!t)return;
   const now=performance.now();
   if(t===lastSpoken&&now-lastAt<9000)return;
-  if(!urgent&&now-lastAt<600)return;
+  if(mode!=='loud'&&now-lastAt<600)return;
   lastSpoken=t;lastAt=now;
+  const v=VOICE[mode]||VOICE.big;
   try{
    synth.cancel();
    const u=new window.SpeechSynthesisUtterance(t);
    if(!ready)pickVoice();
    if(voice)u.voice=voice;
    u.lang=(voice&&voice.lang)||'en-GB';
-   u.rate=1.42;u.pitch=.92;u.volume=1;
+   u.rate=v.rate;u.pitch=v.pitch;u.volume=v.vol;
    synth.speak(u);
   }catch(e){}
  }
@@ -2234,15 +2238,16 @@ window.addEventListener('DOMContentLoaded',()=>{
  }
  function readNum(id){const e=document.getElementById(id);if(!e)return null;const m=(e.textContent||'').match(/\d+/);return m?+m[0]:null;}
  function nameOf(side){const e=document.getElementById(side==='A'?'nameA':'nameB');const t=e?(e.textContent||'').trim():'';return t||'the opposition';}
+ const scorerName=()=>nameOf(scorerSide);
  const ARR={
   kickoff:[()=>'We are under way! '+nameOf('A')+' against '+nameOf('B')+' — and the crowd is right up for this one.',
           ()=>'Kick-off! '+nameOf('A')+' get us started against '+nameOf('B')+'.',
           ()=>'And they are off and running — '+nameOf('A')+' versus '+nameOf('B')+'.'],
-  goal:[()=>'GOAL! '+nameOf('A')+' find the net — it is '+gA+' to '+gB+'!',
-        ()=>'It is in! '+nameOf('A')+' strike, and the lead is '+gA+' to '+gB+'.',
-        ()=>'What a finish! '+nameOf('A')+' make it '+gA+' – '+gB+'.',
-        ()=>nameOf('A')+' put it away! The scoreboard reads '+gA+' to '+gB+'.',
-        ()=>'Bedlam in the stands — '+nameOf('A')+' score, '+gA+' to '+gB+'.'],
+  goal:[()=>'GOAL! '+scorerName()+' find the net — it is '+gA+' to '+gB+'!',
+        ()=>'It is in! '+scorerName()+' strike, and the lead is '+gA+' to '+gB+'.',
+        ()=>'What a finish! '+scorerName()+' make it '+gA+' – '+gB+'.',
+        ()=>scorerName()+' put it away! The scoreboard reads '+gA+' to '+gB+'.',
+        ()=>'Bedlam in the stands — '+scorerName()+' score, '+gA+' to '+gB+'.'],
   save:[()=>'Denied! A big hand from the goalkeeper.',
         ()=>'Kept out — that was heading for the corner.',
         ()=>'Brilliant stop! The keeper stands tall.',
@@ -2273,7 +2278,7 @@ window.addEventListener('DOMContentLoaded',()=>{
            ()=>'Kept out! The keeper stands tall and the pressure is back on.',
            ()=>'Brilliant stop — that shootout just turned.']
  };
- let gA=0,gB=0,shooter='the taker';
+ let gA=0,gB=0,shooter='the taker',scorerSide='A';
  let prevRunning=false,prevEnded=false,prevA=0,prevB=0,prevShot=false,prevKeeper=false,idleAt=0,prevCallout='',prevPen=false,lastClock='',clockAt=0,prevApexText='',apexOpen=false;
  function tick(){
   const clockEl=document.getElementById('clock');
@@ -2294,7 +2299,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(isApexOpen){
    const c=document.getElementById('axpMComm');
    const txt=c?(c.textContent||'').trim():'';
-   if(txt&&txt!==prevApexText){prevApexText=txt;say(txt,true);}
+   if(txt&&txt!==prevApexText){prevApexText=txt;say(txt,/goal|saved|denied|penalt/i.test(txt)?'loud':'big');}
    apexOpen=true;prevRunning=false;prevEnded=false;return;
   }
   if(apexOpen){apexOpen=false;prevApexText='';}
@@ -2302,15 +2307,15 @@ window.addEventListener('DOMContentLoaded',()=>{
   const ov=document.getElementById('pkPenaltyShootout');
   const penOpen=!!ov&&!ov.hidden;
   if(penOpen){
-   if(!prevPen)say(fresh('penIntro',ARR.penIntro),true);
+   if(!prevPen)say(fresh('penIntro',ARR.penIntro),'big');
    const co=document.getElementById('pkPenCallout');
    const txt=(co&&co.textContent||'').trim();
    const badge=document.getElementById('pkPenaltyShooterNow');
    shooter=badge&&badge.textContent?badge.textContent.replace(/^[^·]*·\s*/,'').trim():'the taker';
    if(txt&&txt!==prevCallout){
     prevCallout=txt;
-    if(txt==='GOAL!')say(fresh('penGoal',ARR.penGoal),true);
-    else say(fresh('penSave',ARR.penSave),true);
+    if(txt==='GOAL!')say(fresh('penGoal',ARR.penGoal),'loud');
+    else say(fresh('penSave',ARR.penSave),'loud');
    }
    if(!txt)prevCallout='';
    prevPen=true;prevRunning=false;prevEnded=false;prevA=gA;prevB=gB;prevShot=false;
@@ -2319,16 +2324,17 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(prevPen){prevPen=false;prevCallout='';prevA=gA;prevB=gB;return;}
 
   if(runNow&&!prevRunning){
-   say(fresh('kickoff',ARR.kickoff),true);
+   say(fresh('kickoff',ARR.kickoff),'big');
    prevA=gA;prevB=gB;prevShot=false;idleAt=performance.now();
   }
-  if(endedNow&&prevRunning&&!prevEnded)say(fresh('full',ARR.full),true);
-  if(runNow&&(gA!==prevA||gB!==prevB))say(fresh('goal',ARR.goal),true);
+  const ranOut=/^\d*0:00$/.test(clockText);
+  if(endedNow&&ranOut&&prevRunning&&!prevEnded)say(fresh('full',ARR.full),'big');
+  if(runNow&&(gA!==prevA||gB!==prevB)){scorerSide=(gA!==prevA)?'A':'B';say(fresh('goal',ARR.goal),'loud');}
   prevA=gA;prevB=gB;
   if(runNow){
-   if(shot&&!prevShot)say(fresh('shot',ARR.shot));
-   else if(prevShot&&!shot&&prevKeeper)say(fresh('save',ARR.save),true);
-   if(performance.now()-idleAt>20000){idleAt=performance.now();say(fresh('idle',ARR.idle));}
+   if(shot&&!prevShot)say(fresh('shot',ARR.shot),'big');
+   else if(prevShot&&!shot&&prevKeeper)say(fresh('save',ARR.save),'loud');
+   if(performance.now()-idleAt>20000){idleAt=performance.now();say(fresh('idle',ARR.idle),'calm');}
    if(!idleAt)idleAt=performance.now();
   }
   prevShot=shot;prevKeeper=keeper;prevRunning=runNow;prevEnded=endedNow;
