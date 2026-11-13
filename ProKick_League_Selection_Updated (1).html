@@ -2208,9 +2208,43 @@ window.addEventListener('DOMContentLoaded',()=>{
    .trim();
  }
  let lastSpoken='',lastAt=0;
+ // Keep track of every sound the game makes so the crowd can be ducked under the voice.
+ const gameAudios=[];
+ try{
+  const NativeAudio=window.Audio;
+  if(NativeAudio){const Wrapped=function(){const el=new NativeAudio(...arguments);gameAudios.push(el);return el;};Wrapped.prototype=NativeAudio.prototype;window.Audio=Wrapped;}
+ }catch(e){}
+ function soundNodes(){
+  const list=gameAudios.slice();
+  try{Array.prototype.forEach.call(document.getElementsByTagName('audio'),a=>{if(list.indexOf(a)<0)list.push(a);});}catch(e){}
+  return list;
+ }
+ function duckCrowd(){
+  soundNodes().forEach(a=>{try{
+   if(!a.__pkDucked){a.__pkDucked=true;a.__pkBase=(typeof a.volume==='number'&&!isNaN(a.volume))?a.volume:1;}
+   a.volume=Math.min(1,Math.max(0,a.__pkBase*0.2));
+  }catch(e){}});
+ }
+ function restoreCrowd(){
+  soundNodes().forEach(a=>{try{if(a.__pkDucked){a.volume=a.__pkBase;delete a.__pkBase;delete a.__pkDucked;}}catch(e){}});
+ }
+ let duckTick=null,duckTimer=null,duckSession=0,activeUtter=null;
+ function endDuck(session){
+  if(session!==undefined&&session!==duckSession)return;
+  if(duckTick){clearInterval(duckTick);duckTick=null;}
+  if(duckTimer){clearTimeout(duckTimer);duckTimer=null;}
+  restoreCrowd();
+ }
+ function duckUnderVoice(ms){
+  duckSession++;
+  duckCrowd();
+  if(!duckTick)duckTick=setInterval(duckCrowd,180);   // crowd keeps re-rising on cheers
+  clearTimeout(duckTimer);
+  duckTimer=setTimeout(function(){endDuck();},ms);
+ }
  // modes: 'loud' = goals / near misses (slower, higher, full volume, dramatic),
  //        'big' = kick-off, full time, shots,  'calm' = filler.
- const VOICE={loud:{rate:1.06,pitch:1.2,vol:1},big:{rate:1.12,pitch:1.05,vol:.95},calm:{rate:1.16,pitch:.9,vol:.8}};
+ const VOICE={loud:{rate:1.06,pitch:1.2,vol:1},big:{rate:1.12,pitch:1.05,vol:1},calm:{rate:1.16,pitch:.9,vol:.9}};
  function say(text,mode){
   const t=voiced(text);
   if(!t)return;
@@ -2226,6 +2260,12 @@ window.addEventListener('DOMContentLoaded',()=>{
    if(voice)u.voice=voice;
    u.lang=(voice&&voice.lang)||'en-GB';
    u.rate=v.rate;u.pitch=v.pitch;u.volume=v.vol;
+   const words=t.split(/\s+/).length;
+   duckUnderVoice(Math.min(14000,Math.max(1200,words*420/v.rate+500)));
+   const mySession=duckSession;
+   activeUtter=u;
+   u.onend=()=>{if(u===activeUtter)endDuck(mySession);};
+   u.onerror=()=>{if(u===activeUtter)endDuck(mySession);};
    synth.speak(u);
   }catch(e){}
  }
