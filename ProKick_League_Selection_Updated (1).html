@@ -2178,4 +2178,126 @@ window.addEventListener('DOMContentLoaded',()=>{
   window.pkSyncResume();
 });
 </script>
+
+<style>
+.pk-commentary{position:absolute;left:14px;top:52px;z-index:12;display:flex;gap:9px;align-items:flex-start;max-width:min(46%,380px);
+ background:linear-gradient(180deg,#0a1524f2,#050b14f2);border:1px solid #2b4563;border-left:3px solid #ffe36b;border-radius:12px;
+ padding:9px 12px;box-shadow:0 12px 26px #0009;backdrop-filter:blur(6px);transition:opacity .2s ease,transform .2s ease}
+.pk-commentary[hidden]{display:none}
+.pk-commentary.pk-comm-off{opacity:.55;max-width:120px}
+.pk-commentary.pk-comm-off .pk-comm-line,.pk-commentary.pk-comm-off .pk-comm-name span{display:none}
+.pk-comm-mic{font-size:16px;line-height:1.1;filter:drop-shadow(0 0 6px #ffe36b66)}
+.pk-comm-body{min-width:0}
+.pk-comm-name{font-size:9px;font-weight:900;letter-spacing:.14em;color:#ffe36b;display:flex;gap:8px;align-items:center;white-space:nowrap}
+.pk-comm-name button{all:unset;cursor:pointer;font-size:11px;font-weight:900;color:#8fb2d8;padding:0 2px;line-height:1}
+.pk-comm-name button:hover{color:#fff}
+.pk-comm-line{font-size:11.5px;font-weight:700;color:#dbe9f7;line-height:1.35;margin-top:3px;letter-spacing:.01em}
+.pk-commentary.pk-comm-pop .pk-comm-line{animation:pkCommIn .28s ease-out}
+@keyframes pkCommIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.pk-commentary.pk-comm-overlay{position:fixed;z-index:1600;left:auto;right:14px;top:14px;bottom:auto;max-width:min(320px,58vw)}
+@media (max-width:760px){.pk-commentary{left:8px;right:auto;top:44px;max-width:calc(100% - 16px)}.pk-commentary.pk-comm-overlay{left:8px;right:8px;top:8px;max-width:none}}
+</style>
+<script>
+/* ===== LIVE COMMENTATOR ===== */
+(function(){
+ const wrap=document.querySelector('.field-wrap');
+ if(!wrap)return;
+ const box=document.createElement('div');
+ box.className='pk-commentary';box.id='pkCommentary';box.hidden=true;
+ box.innerHTML='<div class="pk-comm-mic">🎙️</div><div class="pk-comm-body">'+
+  '<div class="pk-comm-name"><span>PROKICK LIVE</span><button type="button" id="pkCommToggle" aria-label="Toggle commentator">–</button></div>'+
+  '<div class="pk-comm-line" id="pkCommLine">Welcome to ProKick — the commentary box is live.</div></div>';
+ wrap.appendChild(box);
+ const line=box.querySelector('#pkCommLine');
+ let on=true,lastAt=0,lastText='',recent=[];
+ box.querySelector('#pkCommToggle').addEventListener('click',()=>{
+  on=!on;box.classList.toggle('pk-comm-off',!on);
+  box.querySelector('#pkCommToggle').textContent=on?'–':'+';
+  if(on)say('And we are back with you in the commentary box.');
+ });
+ function say(text,force){
+  if(!text||text===lastText)return;
+  const now=performance.now();
+  if(!force&&now-lastAt<2200)return;
+  lastAt=now;lastText=text;
+  line.textContent=text;
+  box.classList.remove('pk-comm-pop');void box.offsetWidth;box.classList.add('pk-comm-pop');
+  recent.push(text);if(recent.length>12)recent.shift();
+ }
+ const pick=a=>a[Math.floor(Math.random()*a.length)];
+function nameOf(side){const e=document.getElementById(side==='A'?'nameA':'nameB');const t=e?(e.textContent||'').trim():'';return t||'the opposition';}
+ const idle=[()=>'Both sides feeling each other out in the middle third.',
+  ()=>'Good tempo to this one — the crowd is right on top of the action.',
+  ()=>'The manager is barking instructions from the touchline.',
+  ()=>'Neat build-up play, but the final ball has to be better.',
+  ()=>'You can hear the away end getting restless.',
+  ()=>'Not much space in behind at the moment — it is all in front of the back line.'];
+ function visible(){
+  if(box.hidden===false&&box.dataset.blocked==='1')return false;
+  const r=wrap.getBoundingClientRect();
+  return r.height>40&&r.bottom>60&&getComputedStyle(wrap).display!=='none';
+ }
+ function readNum(id){const e=document.getElementById(id);if(!e)return null;const m=(e.textContent||'').match(/\d+/);return m?+m[0]:null;}
+ let prevRunning=false,prevEnded=false,prevA=0,prevB=0,prevShot=false,prevKeeper=false,idleAt=performance.now(),prevCallout='',prevPen=false,lastClock='',clockAt=0;
+ setInterval(()=>{
+  const clockEl=document.getElementById('clock');
+  const clockText=clockEl?clockEl.textContent:'';
+  if(clockText!==lastClock){lastClock=clockText;clockAt=performance.now();}
+  let shot=false,keeper=false,engineEnd=false,engineRun=false;
+  try{shot=!!ball.isShot;keeper=!!ball.keeperTried;}catch(e){}
+  try{engineEnd=!!matchEnded;engineRun=!!running;}catch(e){}
+  const sA=readNum('scoreA'),sB=readNum('scoreB');
+  const gA=sA===null?0:sA,gB=sB===null?0:sB;
+  const active=performance.now()-clockAt<1800;
+  const endedNow=engineEnd||/^\d*0:00$/.test(clockText.trim());
+  const runNow=engineRun||(active&&!endedNow);
+  const penOpen=!document.getElementById('pkPenaltyShootout').hidden;
+  const anyScreen=!!document.querySelector('.pk-screen:not([hidden])');
+  box.hidden=!(penOpen||(!anyScreen&&(runNow||endedNow)));
+  box.classList.toggle('pk-comm-overlay',penOpen);
+  if(penOpen){
+   if(!prevPen){
+    say('So it all comes down to penalties — '+nameOf('A')+' against '+nameOf('B')+'. Nerve time.',true);
+   }
+   const co=document.getElementById('pkPenCallout');
+   const txt=(co&&co.textContent||'').trim();
+   if(txt&&txt!==prevCallout){
+    prevCallout=txt;
+    const badge=document.getElementById('pkPenaltyShooterNow');
+    const shooter=badge&&badge.textContent?badge.textContent.replace(/^[^·]*·\s*/,'').trim():'the taker';
+    if(txt==='GOAL!')say(pick(['Buried it! '+shooter+' holds their nerve from twelve yards.',
+      'Cool as you like — '+shooter+' sends the keeper the wrong way.',
+      'Straight down the middle and it beats the dive! '+shooter+' converts.',
+      'No doubt about that one. '+shooter+' finds the corner.']),true);
+    else say(pick(['SAVED! The keeper guesses right and keeps it out.',
+      'Denied! A big hand from the goalkeeper stops '+shooter+'.',
+      'Oh, that is a huge save — '+shooter+' cannot believe it.',
+      'Kept out! The keeper stands tall and the pressure is back on.']),true);
+   }
+   if(!txt)prevCallout='';
+   prevPen=true;prevRunning=false;prevEnded=false;prevA=gA;prevB=gB;prevShot=false;
+   return;
+  }
+  if(prevPen){prevPen=false;prevCallout='';say('Back to open play — and the tempo lifts again.');}
+  if(runNow&&!prevRunning){
+   say('We are under way! '+nameOf('A')+' against '+nameOf('B')+' — and the crowd is up for this one.',true);
+   prevA=gA;prevB=gB;prevShot=false;idleAt=performance.now();
+  }
+  if(endedNow&&prevRunning&&!prevEnded){
+   const diff=gA-gB;
+   say('That is the full-time whistle — '+gA+' – '+gB+'. '+(diff===0?'Honours even.':(diff>0?nameOf('A')+' take the win.':nameOf('B')+' take the win.')),true);
+  }
+  if((gA!==prevA||gB!==prevB)&&runNow){
+   say('GOAL! '+nameOf(gA!==prevA?'A':'B')+' find the net — it is '+gA+' – '+gB+'!',true);
+   prevShot=false;
+  }
+  prevA=gA;prevB=gB;
+  if(shot&&!prevShot)say(pick(['He has a go!','Shot away!','Effort on goal — the keeper is worried.']));
+  if(prevShot&&!shot&&prevKeeper&&runNow)say(pick(['What a save! Strong hand to keep that out.','Denied! The keeper stands tall.','Brilliant stop — that was heading in.']));
+  prevShot=shot;prevKeeper=keeper;
+  if(runNow&&performance.now()-idleAt>18000){idleAt=performance.now();say(pick(idle)());}
+  prevRunning=runNow;prevEnded=endedNow;
+ },300);
+})();
+</script>
 </body></html>
