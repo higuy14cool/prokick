@@ -225,45 +225,92 @@ document.getElementById('pkVictoryExit').addEventListener('click',()=>{pkPenalty
 // Replace the menu-like penalty panel with an immersive, broadcast-style penalty camera.
 const pkPenaltySceneStyle=document.createElement('style');
 pkPenaltySceneStyle.textContent=`
-#pkPenaltyShootout{padding:0!important;overflow:hidden;background:#07130c!important;color:#fff!important}
-#pkPenaltyShootout .pk-penalty-card{position:relative;width:100%;height:100%;max-height:none;overflow:hidden;padding:0;border:0;border-radius:0;background:linear-gradient(#07121bd9,#07121b00 28%),linear-gradient(180deg,#23394a 0%,#172a37 34%,#25683b 35%,#174a2b 100%);box-shadow:none;text-align:center}
-#pkPenaltyShootout .pk-broadcast-top{position:absolute;z-index:8;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:clamp(10px,2vw,22px) clamp(12px,3vw,34px);background:linear-gradient(90deg,#07111de8,#07111d9c);border-bottom:1px solid #ffffff30}
-#pkPenaltyShootout .pk-broadcast-brand{font-size:clamp(10px,1.5vw,14px);font-weight:1000;letter-spacing:2px;color:#eaf5ff}
-#pkPenaltyShootout .pk-broadcast-score{display:flex;align-items:center;gap:clamp(8px,2vw,22px);padding:8px 18px;border-radius:5px;background:#08131fe8;border:1px solid #ffffff45;box-shadow:0 5px 18px #0007}
-#pkPenaltyShootout .pk-broadcast-team{font-size:clamp(10px,1.5vw,15px);font-weight:950;max-width:26vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#pkPenaltyShootout .pk-broadcast-score strong{font-size:clamp(19px,3vw,29px);font-variant-numeric:tabular-nums}
-#pkPenaltyShootout .pk-broadcast-meta{font-size:10px;font-weight:900;letter-spacing:1px;color:#d2e8d8;text-align:right}
-#pkPenaltyShootout .pk-penalty-arena{position:absolute;inset:0;overflow:hidden;perspective:850px}
-#pkPenaltyShootout .pk-stands{position:absolute;left:-8%;right:-8%;top:10%;height:34%;background:repeating-linear-gradient(90deg,#314b5b 0 42px,#253d4b 43px 46px),repeating-linear-gradient(0deg,#7c8c8e 0 3px,#253844 4px 13px);border-bottom:8px solid #182b35;box-shadow:0 12px 25px #0008}
-#pkPenaltyShootout .pk-crowd{position:absolute;inset:12% 0 0;background-image:radial-gradient(circle,#f3d5a2 0 2px,transparent 3px),radial-gradient(circle,#dce6e9 0 2px,transparent 3px),radial-gradient(circle,#d95b45 0 2px,transparent 3px),radial-gradient(circle,#65a4cf 0 2px,transparent 3px);background-size:19px 23px,27px 29px,31px 27px,23px 31px;background-position:0 0,8px 7px,12px 3px,3px 13px;opacity:.65}
-#pkPenaltyShootout .pk-pitch{position:absolute;left:-20%;right:-20%;top:37%;bottom:-34%;transform:rotateX(54deg);transform-origin:top center;background:repeating-linear-gradient(90deg,#2b8243 0 13%,#26783d 13% 26%);border-top:5px solid #e9f3e6;box-shadow:inset 0 22px 35px #0003}
-#pkPenaltyShootout .pk-pitch:before{content:"";position:absolute;left:27%;right:27%;top:0;height:47%;border:3px solid #f1f5e9;border-top:0}
-#pkPenaltyShootout .pk-pitch:after{content:"";position:absolute;left:0;right:0;top:47%;border-top:3px solid #f1f5e9}
-#pkPenaltyShootout .pk-goal{position:absolute;z-index:3;top:27%;left:50%;transform:translateX(-50%);width:min(66vw,700px);height:clamp(105px,22vh,230px);border:clamp(5px,.8vw,10px) solid #f4f5ee;border-bottom:0;border-radius:5px 5px 0 0;background:repeating-linear-gradient(90deg,transparent 0 7.8%,#ffffff85 8% 8.25%),repeating-linear-gradient(0deg,#ffffff0b 0 18px,#ffffff65 19px 20px);box-shadow:0 0 0 2px #18252a,0 12px 25px #0006}
-#pkPenaltyShootout .pk-keeper{position:absolute;z-index:4;left:50%;bottom:-7px;transform:translateX(-50%);width:clamp(43px,7vw,76px);height:clamp(70px,13vh,125px);background:linear-gradient(90deg,#d9b54a 0 28%,#f4d66a 29% 70%,#c49c35 71%);clip-path:polygon(35% 0,65% 0,77% 12%,100% 33%,89% 43%,74% 31%,76% 65%,94% 100%,63% 100%,50% 75%,37% 100%,6% 100%,24% 65%,26% 31%,11% 43%,0 33%,23% 12%);filter:drop-shadow(0 4px 5px #0009);transition:transform .35s}
-#pkPenaltyShootout .pk-keeper:before{content:"";position:absolute;top:0;left:31%;width:38%;height:21%;border-radius:50%;background:#c58f69}
-#pkPenaltyShootout .pk-shooter{position:absolute;z-index:4;left:50%;bottom:10%;transform:translateX(-50%);width:clamp(58px,9vw,100px);height:clamp(125px,24vh,220px);background:linear-gradient(90deg,#e9f0ed 0 35%,#fff 36% 68%,#c8d6d2 69%);clip-path:polygon(35% 0,65% 0,75% 10%,72% 43%,89% 55%,100% 100%,78% 100%,61% 65%,55% 49%,48% 67%,36% 100%,12% 100%,27% 53%,29% 12%);filter:drop-shadow(0 6px 8px #0009)}
-#pkPenaltyShootout .pk-shooter:before{content:"";position:absolute;top:0;left:30%;width:40%;height:19%;border-radius:50%;background:#c58f69}
-#pkPenaltyShootout .pk-ball{position:absolute;z-index:6;left:50%;bottom:8%;transform:translateX(-50%);font-size:clamp(25px,4vw,42px);filter:drop-shadow(0 5px 5px #000b);transition:left .42s cubic-bezier(.2,.7,.2,1),bottom .42s,transform .42s}
-#pkPenaltyShootout.pk-kick-left .pk-ball{left:34%;bottom:56%;transform:translateX(-50%) scale(.65)}
-#pkPenaltyShootout.pk-kick-center .pk-ball{left:50%;bottom:65%;transform:translateX(-50%) scale(.62)}
-#pkPenaltyShootout.pk-kick-right .pk-ball{left:66%;bottom:56%;transform:translateX(-50%) scale(.65)}
-#pkPenaltyShootout.pk-dive-left .pk-keeper{transform:translateX(-145%) rotate(-28deg)}
-#pkPenaltyShootout.pk-dive-right .pk-keeper{transform:translateX(45%) rotate(28deg)}
-#pkPenaltyShootout .pk-penalty-hud{position:absolute;z-index:10;left:50%;bottom:clamp(12px,3vh,30px);transform:translateX(-50%);width:min(700px,94vw);padding:clamp(12px,2vw,20px);border:1px solid #ffffff4a;border-radius:14px;background:linear-gradient(180deg,#07141be8,#07141bf5);box-shadow:0 12px 36px #0009}
-#pkPenaltyShootout .pk-penalty-progress{margin:0 0 7px;color:#c6e9cf;font-size:11px}
-#pkPenaltyShootout .pk-penalty-instruction{font-size:clamp(16px,2.3vw,23px);margin:0 0 5px}
-#pkPenaltyShootout .pk-penalty-sub{margin:0 0 10px;color:#c0d4c6}
-#pkPenaltyShootout .pk-penalty-zones{max-width:520px;margin:0 auto 10px;gap:8px}
-#pkPenaltyShootout .pk-penalty-zone{background:#1b3543;border-color:#7793a0;padding:clamp(9px,1.5vh,14px) 5px}
-#pkPenaltyShootout .pk-penalty-zone.selected{background:#315d42;border-color:#c9ed58;box-shadow:0 0 0 2px #c9ed5835}
-#pkPenaltyShootout .pk-penalty-action{padding:12px 24px;min-width:min(300px,100%);border-radius:6px;background:linear-gradient(180deg,#f4d15a,#d9a52a);color:#17200f}
-#pkPenaltyShootout .pk-penalty-result{margin:6px 0 0;min-height:22px;font-size:15px}
-@media(max-width:560px){#pkPenaltyShootout .pk-broadcast-top{padding:8px}#pkPenaltyShootout .pk-broadcast-score{gap:7px;padding:6px 8px}#pkPenaltyShootout .pk-broadcast-brand{font-size:9px;letter-spacing:1px}#pkPenaltyShootout .pk-goal{top:29%;width:78vw;height:18vh}#pkPenaltyShootout .pk-stands{top:12%;height:31%}#pkPenaltyShootout .pk-pitch{top:39%}#pkPenaltyShootout .pk-shooter{bottom:13%}#pkPenaltyShootout .pk-penalty-hud{bottom:7px;padding:10px 8px}#pkPenaltyShootout .pk-penalty-zones{gap:5px;margin-bottom:7px}#pkPenaltyShootout .pk-penalty-zone{font-size:11px}#pkPenaltyShootout .pk-penalty-sub{font-size:10px}}
+/* Penalty scene: camera behind the ball, real goal with net, keeper who dives, ball flight */
+#pkPenaltyShootout{padding:0!important;overflow:hidden;background:#04090d!important;color:#fff!important}
+#pkPenaltyShootout .pk-penalty-card{position:relative;width:100%;height:100%;max-height:none;overflow:hidden;padding:0;border:0!important;border-radius:0!important;box-shadow:none!important;text-align:center;background:#04090d;font-family:inherit}
+#pkPenaltyShootout .pk-pen-sky{position:absolute;inset:0;background:linear-gradient(180deg,#050b14 0%,#0a1a2b 26%,#122f45 40%,#183c33 41%,#123024 62%,#0b2018 100%)}
+#pkPenaltyShootout .pk-pen-stands{position:absolute;left:-6%;right:-6%;top:7%;height:29%;background:linear-gradient(180deg,#0d1d2a,#132b3a 55%,#0b1a24);border-bottom:5px solid #0a1620;box-shadow:0 10px 26px #000a;overflow:hidden}
+#pkPenaltyShootout .pk-pen-stands:before{content:"";position:absolute;inset:14% 0 0;background-image:radial-gradient(circle,#f4d9ab 0 1.7px,transparent 2.4px),radial-gradient(circle,#cfe0ea 0 1.7px,transparent 2.4px),radial-gradient(circle,#e0654c 0 1.7px,transparent 2.4px),radial-gradient(circle,#6da9d4 0 1.7px,transparent 2.4px),radial-gradient(circle,#f0e6b8 0 1.7px,transparent 2.4px);background-size:17px 21px,23px 27px,29px 25px,21px 29px,33px 31px;background-position:0 0,7px 6px,11px 3px,3px 12px,17px 9px;opacity:.55}
+#pkPenaltyShootout .pk-pen-stands:after{content:"";position:absolute;inset:0 0 auto;height:16%;background:repeating-linear-gradient(90deg,#213b4c 0 60px,#16293a 61px 64px);border-bottom:1px solid #ffffff1f}
+#pkPenaltyShootout .pk-pen-flood{position:absolute;top:0;width:26vw;height:52%;pointer-events:none;opacity:.5;mix-blend-mode:screen}
+#pkPenaltyShootout .pk-pen-flood-l{left:2%;background:radial-gradient(ellipse at 50% 0,#fff7d6 0%,#fff3c026 42%,transparent 72%);clip-path:polygon(34% 0,66% 0,100% 100%,0 100%)}
+#pkPenaltyShootout .pk-pen-flood-r{right:2%;background:radial-gradient(ellipse at 50% 0,#fff7d6 0%,#fff3c026 42%,transparent 72%);clip-path:polygon(34% 0,66% 0,100% 100%,0 100%)}
+#pkPenaltyShootout .pk-pen-grass{position:absolute;left:-14%;right:-14%;top:36%;bottom:0;background:repeating-linear-gradient(180deg,#1f6b39 0 7.2%,#1a5c31 7.2% 14.4%);box-shadow:inset 0 20px 40px #0006}
+#pkPenaltyShootout .pk-pen-arc{position:absolute;left:50%;top:34.5%;width:min(150vw,1500px);height:64%;transform:translateX(-50%);border:3px solid #ffffff5c;border-radius:50% 50% 0 0/78% 78% 0 0;border-bottom:0;pointer-events:none}
+#pkPenaltyShootout .pk-pen-box{position:absolute;left:50%;top:36.4%;width:min(96vw,1080px);height:34%;transform:translateX(-50%);border:3px solid #ffffff8a;border-top:0;box-shadow:0 0 0 1px #00000030 inset;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+#pkPenaltyShootout .pk-pen-goal{position:absolute;z-index:4;top:15%;left:50%;transform:translateX(-50%);width:min(70vw,760px);height:clamp(96px,22vh,220px);border:clamp(5px,.75vw,9px) solid #f7f8f2;border-bottom:0;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#04121a9c,#0a202b4d);box-shadow:0 0 0 2px #0d1a20,0 14px 30px #0007;overflow:hidden}
+#pkPenaltyShootout .pk-pen-net{position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,#ffffff4a 0 1px,transparent 1px 15px),repeating-linear-gradient(0deg,#ffffff4a 0 1px,transparent 1px 15px);perspective:700px;transform-origin:top center}
+#pkPenaltyShootout .pk-pen-goal:after{content:"";position:absolute;left:0;right:0;bottom:0;height:14%;background:linear-gradient(0deg,#0000008c,transparent)}
+#pkPenaltyShootout .pk-pen-keeper{position:absolute;z-index:3;left:50%;bottom:2px;transform:translateX(-50%);width:clamp(38px,6vw,66px);height:clamp(62px,11vh,108px);transition:transform .34s cubic-bezier(.2,.9,.25,1.1);will-change:transform}
+#pkPenaltyShootout .pk-pen-keeper:before{content:"";position:absolute;left:50%;top:0;transform:translateX(-50%);width:44%;height:24%;border-radius:50%;background:linear-gradient(#e8b98d,#c6815f);box-shadow:inset 0 -3px 4px #00000030}
+#pkPenaltyShootout .pk-pen-keeper:after{content:"";position:absolute;left:6%;right:6%;top:22%;bottom:0;background:linear-gradient(90deg,#c9a43a,#ffe27a 35%,#f0c84f 65%,#b8902c);border-radius:8px 8px 4px 4px;clip-path:polygon(24% 0,76% 0,100% 24%,86% 100%,14% 100%,0 24%);box-shadow:0 4px 10px #0008}
+#pkPenaltyShootout .pk-pen-keeper-arm{position:absolute;top:30%;width:150%;height:22%;left:-25%;background:linear-gradient(#ffe27a,#c9a43a);border-radius:40%;opacity:0;transition:opacity .1s}
+#pkPenaltyShootout .pk-pen-glove{position:absolute;top:26%;width:16%;height:16%;border-radius:3px;background:#e8ece8;box-shadow:0 0 4px #0006}
+#pkPenaltyShootout .pk-pen-glove-l{left:-2%}#pkPenaltyShootout .pk-pen-glove-r{right:-2%}
+#pkPenaltyShootout .pk-pen-goal{cursor:crosshair;touch-action:none}
+#pkPenaltyShootout .pk-pen-aim{position:absolute;z-index:6;width:clamp(24px,3.2vw,36px);height:clamp(24px,3.2vw,36px);border:2px solid #ffe36b;border-radius:50%;background:#ffe36b1f;box-shadow:0 0 12px #ffe36b99,inset 0 0 10px #ffe36b55;pointer-events:none;transform:translate(-50%,-50%)}
+#pkPenaltyShootout .pk-pen-aim:before,#pkPenaltyShootout .pk-pen-aim:after{content:"";position:absolute;background:#ffe36b;box-shadow:0 0 6px #ffe36b}
+#pkPenaltyShootout .pk-pen-aim:before{left:50%;top:-7px;bottom:-7px;width:2px;transform:translateX(-50%)}
+#pkPenaltyShootout .pk-pen-aim:after{top:50%;left:-7px;right:-7px;height:2px;transform:translateY(-50%)}
+#pkPenaltyShootout .pk-pen-hint{position:absolute;z-index:6;left:50%;bottom:5%;transform:translateX(-50%);font-size:clamp(8px,1vw,11px);letter-spacing:1.6px;font-weight:800;color:#ffffffc0;text-shadow:0 2px 6px #000;pointer-events:none;white-space:nowrap}
+#pkPenaltyShootout .pk-pen-hitpad{position:absolute;inset:0;z-index:5;cursor:crosshair}
+#pkPenaltyShootout .pk-pen-spot{position:absolute;z-index:2;left:50%;bottom:calc(34% - 5px);width:min(58px,9vw);height:min(16px,3vw);transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,#ffffff5c,#ffffff0d 70%);filter:blur(.4px)}
+#pkPenaltyShootout .pk-pen-ball{position:absolute;z-index:6;left:50%;bottom:34%;width:clamp(24px,3.4vw,40px);height:clamp(24px,3.4vw,40px);margin-left:calc(clamp(24px,3.4vw,40px)/-2);transform:translateY(0) rotate(0) scale(1);transform-origin:50% 50%;transition:transform .62s cubic-bezier(.35,.06,.6,1),filter .62s;filter:drop-shadow(0 6px 6px #000a);will-change:transform}
+#pkPenaltyShootout .pk-pen-ball i{display:block;width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 33% 29%,#fff 0 42%,#e8e8e8 43% 56%,#c9cdd0 57%);box-shadow:inset -3px -4px 6px #8b9195,inset 2px 3px 5px #fff;position:relative}
+#pkPenaltyShootout .pk-pen-ball i:before,#pkPenaltyShootout .pk-pen-ball i:after{content:"";position:absolute;border-radius:2px;background:#20262a}
+#pkPenaltyShootout .pk-pen-ball i:before{left:38%;top:16%;width:26%;height:22%;clip-path:polygon(50% 0,100% 38%,82% 100%,18% 100%,0 38%)}
+#pkPenaltyShootout .pk-pen-ball i:after{left:20%;top:56%;width:22%;height:18%;clip-path:polygon(50% 0,100% 45%,75% 100%,25% 100%,0 45%)}
+#pkPenaltyShootout.pk-shot .pk-pen-ball{transform:translate(var(--bx,0px),var(--by,0px)) rotate(var(--br,0deg)) scale(var(--bs,.4))}
+#pkPenaltyShootout.pk-shot .pk-pen-keeper{transform:translateX(var(--kx,0px)) rotate(var(--kr,0deg)) scaleY(.9)}
+#pkPenaltyShootout.pk-shot .pk-pen-keeper-arm{opacity:1}
+#pkPenaltyShootout.pk-saved .pk-pen-ball{transition:transform .3s ease-out;transform:translate(var(--sx,0px),var(--sy,0px)) rotate(var(--br,0deg)) scale(.46)}
+#pkPenaltyShootout.pk-saved .pk-pen-keeper{transition:transform .3s ease-out}
+#pkPenaltyShootout.pk-saved .pk-pen-keeper{transition:transform .3s ease-out}
+@keyframes pkNetRipple{0%{transform:scaleX(1) scaleY(1)}35%{transform:scaleX(1.04) scaleY(1.06)}100%{transform:scaleX(1) scaleY(1)}}
+#pkPenaltyShootout .pk-pen-callout{position:absolute;z-index:9;left:50%;top:44%;transform:translate(-50%,-50%) scale(.7);font-size:clamp(30px,7vw,74px);font-weight:1000;letter-spacing:2px;color:#ffe36b;text-shadow:0 6px 24px #000,0 0 30px #ffe36b66;opacity:0;pointer-events:none;transition:opacity .18s,transform .28s cubic-bezier(.2,1.5,.4,1)}
+#pkPenaltyShootout .pk-pen-callout.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#pkPenaltyShootout .pk-pen-callout.miss{color:#ff8f7a;text-shadow:0 6px 24px #000,0 0 30px #ff7a5e66}
+#pkPenaltyShootout .pk-broadcast-top{position:absolute;z-index:12;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:clamp(8px,1.6vw,18px) clamp(12px,3vw,30px);background:linear-gradient(90deg,#050f18e8,#050f18a6,#050f18e8);border-bottom:1px solid #ffffff30}
+#pkPenaltyShootout .pk-broadcast-brand{font-size:clamp(9px,1.4vw,13px);font-weight:1000;letter-spacing:2px;color:#eaf5ff}
+#pkPenaltyShootout .pk-broadcast-score{display:flex;align-items:center;gap:clamp(8px,1.6vw,18px);padding:6px 14px;border-radius:5px;background:#061019e8;border:1px solid #ffffff3d;box-shadow:0 5px 18px #0007}
+#pkPenaltyShootout .pk-broadcast-team{font-size:clamp(9px,1.4vw,14px);font-weight:950;max-width:24vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#pkPenaltyShootout .pk-broadcast-score strong{font-size:clamp(18px,2.8vw,27px);font-variant-numeric:tabular-nums;color:#ffe36b}
+#pkPenaltyShootout .pk-broadcast-meta{font-size:9px;font-weight:900;letter-spacing:1px;color:#cfe4d6;text-align:right}
+#pkPenaltyShootout .pk-penalty-hud{position:absolute;z-index:12;left:50%;bottom:clamp(8px,1.6vh,20px);transform:translateX(-50%);width:min(660px,94vw);padding:clamp(9px,1.4vw,16px) clamp(10px,2vw,18px);border:1px solid #ffffff36;border-radius:12px;background:linear-gradient(180deg,#05121ae0,#05121af2);box-shadow:0 12px 32px #0008}
+#pkPenaltyShootout .pk-penalty-progress{margin:0 0 5px;color:#bfe6cd;font-size:10.5px;letter-spacing:1px;font-weight:900}
+#pkPenaltyShootout .pk-penalty-instruction{font-size:clamp(14px,1.9vw,20px);margin:0 0 3px;font-weight:1000}
+#pkPenaltyShootout .pk-penalty-sub{margin:0 0 8px;color:#b9cfc1;font-size:clamp(10px,1.3vw,12.5px)}
+#pkPenaltyShootout .pk-penalty-zones{max-width:470px;margin:0 auto 8px;gap:7px}
+#pkPenaltyShootout .pk-penalty-zone{background:#132c39;border-color:#6d8996;color:#e9f5ff;padding:clamp(7px,1.2vh,12px) 4px;font-size:clamp(10px,1.3vw,12px);font-weight:1000;border-radius:7px}
+#pkPenaltyShootout .pk-penalty-zone.selected{background:#27583c;border-color:#c9ed58;box-shadow:0 0 0 2px #c9ed5835}
+#pkPenaltyShootout .pk-penalty-zone:disabled{opacity:.4}
+#pkPenaltyShootout .pk-penalty-action{padding:10px 22px;min-width:min(280px,100%);border:0;border-radius:6px;background:linear-gradient(180deg,#ffe77a,#dda92c);color:#170f04;font-weight:1000;letter-spacing:.6px;cursor:pointer}
+#pkPenaltyShootout .pk-penalty-result{margin:5px 0 0;min-height:18px;font-size:13px;color:#ffe9a8;font-weight:900}
+#pkPenaltyShootout .pk-pen-hint{position:absolute;z-index:11;left:50%;bottom:clamp(8px,1.6vh,20px);transform:translateX(-50%);font-size:10px;letter-spacing:1px;color:#ffffff7a;display:none}
+@media(max-width:560px){
+ #pkPenaltyShootout .pk-pen-stands{top:5%;height:26%}
+ #pkPenaltyShootout .pk-pen-goal{top:11%;width:82vw;height:15vh}
+ #pkPenaltyShootout .pk-pen-ball{bottom:44%}
+ #pkPenaltyShootout .pk-pen-spot{bottom:calc(44% - 4px)}
+ #pkPenaltyShootout .pk-broadcast-brand{display:none}
+ #pkPenaltyShootout .pk-pen-callout{top:36%}
+ #pkPenaltyShootout .pk-penalty-hud{padding:8px 9px;width:96vw}
+ #pkPenaltyShootout .pk-penalty-zones{gap:5px}
+}
+@media(max-height:520px){#pkPenaltyShootout .pk-penalty-sub{display:none}#pkPenaltyShootout .pk-pen-goal{top:9%}}
 `;
 document.head.appendChild(pkPenaltySceneStyle);
-pkPenaltyOverlay.innerHTML='<div class="pk-penalty-card"><div class="pk-penalty-arena"><div class="pk-stands"><div class="pk-crowd"></div></div><div class="pk-pitch"></div><div class="pk-goal"><div class="pk-keeper"></div></div><div class="pk-shooter"></div><div class="pk-ball">⚽</div></div><div class="pk-broadcast-top"><div class="pk-broadcast-brand">PROKICK · PENALTY SHOOTOUT</div><div class="pk-broadcast-score"><span class="pk-broadcast-team" id="pkPenaltyHomeName">HOME</span><strong id="pkPenaltyHomeScore">0</strong><span>–</span><strong id="pkPenaltyAwayScore">0</strong><span class="pk-broadcast-team" id="pkPenaltyAwayName">AWAY</span></div><div class="pk-broadcast-meta"><span id="pkPenaltyHomeShots">0 / 5 KICKS</span><br><span id="pkPenaltyAwayShots">0 / 5 KICKS</span></div></div><div class="pk-penalty-hud"><div class="pk-penalty-progress" id="pkPenaltyProgress">KICK 1 OF 5 · 0/5 — 0/5</div><div class="pk-penalty-instruction" id="pkPenaltyInstruction">Choose your shot direction</div><p class="pk-penalty-sub" id="pkPenaltySub">Aim for a corner, then shoot.</p><div class="pk-penalty-zones" id="pkPenaltyZones"><button class="pk-penalty-zone selected" type="button" data-penalty-zone="left">↖ LEFT</button><button class="pk-penalty-zone" type="button" data-penalty-zone="center">↑ CENTER</button><button class="pk-penalty-zone" type="button" data-penalty-zone="right">↗ RIGHT</button></div><button class="pk-penalty-action" type="button" id="pkPenaltyAction">SHOOT PENALTY ⚽</button><div class="pk-penalty-result" id="pkPenaltyResult" aria-live="polite"></div></div></div>';
+pkPenaltyOverlay.innerHTML='<div class="pk-penalty-card"><div class="pk-pen-sky"></div><div class="pk-pen-stands"></div><div class="pk-pen-flood pk-pen-flood-l"></div><div class="pk-pen-flood pk-pen-flood-r"></div><div class="pk-pen-grass"></div><div class="pk-pen-arc"></div><div class="pk-pen-box"></div><div class="pk-pen-goal"><div class="pk-pen-net"></div><div class="pk-pen-keeper"><span class="pk-pen-keeper-arm"></span><span class="pk-pen-glove pk-pen-glove-l"></span><span class="pk-pen-glove pk-pen-glove-r"></span></div><div class="pk-pen-hitpad" id="pkPenHitpad"></div><div class="pk-pen-aim" id="pkPenAim" style="left:50%;top:50%"></div><div class="pk-pen-hint" id="pkPenHint">CLICK / TAP ANYWHERE IN THE GOAL TO AIM</div></div><div class="pk-pen-spot"></div><div class="pk-pen-ball"><i></i></div><div class="pk-pen-callout" id="pkPenCallout"></div><div class="pk-broadcast-top"><div class="pk-broadcast-brand">PROKICK &middot; PENALTY SHOOTOUT</div><div class="pk-broadcast-score"><span class="pk-broadcast-team" id="pkPenaltyHomeName">HOME</span><strong id="pkPenaltyHomeScore">0</strong><span>&ndash;</span><strong id="pkPenaltyAwayScore">0</strong><span class="pk-broadcast-team" id="pkPenaltyAwayName">AWAY</span></div><div class="pk-broadcast-meta"><span id="pkPenaltyHomeShots">0 / 5 KICKS</span><br><span id="pkPenaltyAwayShots">0 / 5 KICKS</span></div></div><div class="pk-penalty-hud"><div class="pk-penalty-progress" id="pkPenaltyProgress">KICK 1 OF 5 &middot; 0/5 &mdash; 0/5</div><div class="pk-penalty-instruction" id="pkPenaltyInstruction">Choose your shot direction</div><p class="pk-penalty-sub" id="pkPenaltySub">Aim for a corner, then shoot.</p><div class="pk-penalty-zones" id="pkPenaltyZones"><button class="pk-penalty-zone selected" type="button" data-penalty-zone="left">&#8598; LEFT</button><button class="pk-penalty-zone" type="button" data-penalty-zone="center">&#8593; CENTER</button><button class="pk-penalty-zone" type="button" data-penalty-zone="right">&#8599; RIGHT</button></div><button class="pk-penalty-action" type="button" id="pkPenaltyAction">SHOOT PENALTY &#9917;</button><div class="pk-penalty-result" id="pkPenaltyResult" aria-live="polite"></div></div></div>';
+pkPenaltyOverlay.querySelector('.pk-penalty-card').appendChild(pkPenaltyVictory);
 let pkPenaltyState=null;
+function pkPenResetScene(){
+ pkPenaltyOverlay.classList.remove('pk-shot','pk-shot-left','pk-shot-center','pk-shot-right','pk-dive-left','pk-dive-right','pk-scored','pk-saved','pk-save-left','pk-save-right');
+ const callout=document.getElementById('pkPenCallout');
+ if(callout){callout.className='pk-pen-callout';callout.textContent='';}
+ const ball=pkPenaltyOverlay.querySelector('.pk-pen-ball');
+ if(ball){ball.style.transition='none';void ball.offsetWidth;ball.style.transition='';}
+ ['--bx','--by','--br','--bs','--kx','--kr','--sx','--sy'].forEach(v=>pkPenaltyOverlay.style.removeProperty(v));
+}
 const pkPenaltyZones=['left','center','right'];
 function pkPenaltyUi(){
  const s=pkPenaltyState;if(!s)return;
@@ -280,7 +327,7 @@ function pkPenaltyUi(){
  document.getElementById('pkPenaltyProgress').textContent=(s.turn<10?'KICK '+(Math.floor(s.turn/2)+1)+' OF 5':'SUDDEN DEATH · PAIR '+(Math.floor((s.turn-10)/2)+1))+' · '+s.shots[0]+'/5 — '+s.shots[1]+'/5';
  const zones=document.getElementById('pkPenaltyZones'),action=document.getElementById('pkPenaltyAction');
  document.getElementById('pkPenaltyInstruction').textContent=s.phase==='finished'?teams[s.winner===0?home:away].name+' WIN THE SHOOTOUT!':s.phase==='result'?s.message:(s.mode==='1'&&team===1?'Opponent penalty — choose where to dive!':(team===0?'PLAYER 1 · '+homeName:'PLAYER 2 · '+awayName)+' — take the penalty');
- document.getElementById('pkPenaltySub').textContent=s.phase==='finished'?'Final penalty score: '+s.scores[0]+' – '+s.scores[1]+'.':s.phase==='result'?'Penalty score: '+s.scores[0]+' – '+s.scores[1]+'.':(s.mode==='1'&&team===1?'Choose LEFT, CENTER, or RIGHT to dive and try to save it.':'Aim LEFT, CENTER, or RIGHT. The goalkeeper will try to guess your shot.');
+ document.getElementById('pkPenaltySub').textContent=s.phase==='finished'?'Final penalty score: '+s.scores[0]+' – '+s.scores[1]+'.':s.phase==='result'?'Penalty score: '+s.scores[0]+' – '+s.scores[1]+'.':(s.mode==='1'&&team===1?'Click or tap anywhere in the goal to dive there.':'Click or tap anywhere in the goal to aim your shot — the corners beat the keeper.');
  document.getElementById('pkPenaltyResult').textContent=s.message||'';
  if(s.phase==='finished'){
   document.getElementById('pkVictoryTeamName').textContent=teams[s.winner===0?home:away].name+' WIN!';
@@ -288,7 +335,12 @@ function pkPenaltyUi(){
   pkPenaltyVictory.classList.add('show');
  }else pkPenaltyVictory.classList.remove('show');
  zones.hidden=s.phase==='finished';
- zones.querySelectorAll('[data-penalty-zone]').forEach(b=>{b.disabled=s.phase!=='aim';b.classList.toggle('selected',b.dataset.penaltyZone===s.zone);b.textContent=(s.mode==='1'&&team===1?'DIVE ':'')+({left:'↖ LEFT',center:'↑ CENTER',right:'↗ RIGHT'}[b.dataset.penaltyZone]);});
+ pkPenaltyOverlay.querySelectorAll('[data-penalty-zone]').forEach(b=>{b.disabled=s.phase!=='aim';b.classList.toggle('selected',!!s.preset&&b.dataset.penaltyZone===s.preset);if(b.classList.contains('pk-penalty-zone'))b.textContent=(s.mode==='1'&&team===1?'DIVE ':'')+({left:'↖ LEFT',center:'↑ CENTER',right:'↗ RIGHT'}[b.dataset.penaltyZone]);});
+ const aimMark=document.getElementById('pkPenAim');
+ if(aimMark){aimMark.style.left=(s.aimX*100)+'%';aimMark.style.top=(s.aimY*100)+'%';aimMark.style.display=s.phase==='finished'?'none':'';}
+ const hint=document.getElementById('pkPenHint');
+ if(hint)hint.textContent=s.phase==='finished'?'SHOOTOUT OVER':s.mode==='1'&&team===1?'CLICK / TAP THE GOAL TO DIVE':'CLICK / TAP ANYWHERE IN THE GOAL TO AIM';
+ if(s.phase==='aim')pkPenResetScene();
  action.textContent=s.phase==='finished'?'FINISH MATCH':s.phase==='result'?'NEXT KICK →':(s.mode==='1'&&team===1?'DIVE & TRY TO SAVE':'SHOOT PENALTY ⚽');
 }
 function pkPenaltyWinner(){
@@ -300,21 +352,59 @@ function pkPenaltyWinner(){
  if(s.shots[0]>=5&&s.shots[1]>=5&&s.shots[0]===s.shots[1]&&s.scores[0]!==s.scores[1])return s.scores[0]>s.scores[1]?0:1;
  return null;
 }
+function pkPenaltyAimAt(clientX,clientY){
+ const s=pkPenaltyState;if(!s||s.phase!=='aim')return;
+ const goal=pkPenaltyOverlay.querySelector('.pk-pen-goal');if(!goal)return;
+ const g=goal.getBoundingClientRect();
+ s.aimX=Math.min(.97,Math.max(.03,(clientX-g.left)/g.width));
+ s.aimY=Math.min(.94,Math.max(.06,(clientY-g.top)/g.height));
+ s.preset=null;pkPenaltyUi();
+}
 function pkPenaltyKick(){
  const s=pkPenaltyState;if(!s||s.phase!=='aim')return;
- const team=s.turn%2;let shotZone=s.zone,keeperZone=pkPenaltyZones[Math.floor(Math.random()*3)];
- if(s.mode==='1'&&team===1){shotZone=pkPenaltyZones[Math.floor(Math.random()*3)];keeperZone=s.zone;}
- pkPenaltyOverlay.classList.remove('pk-kick-left','pk-kick-center','pk-kick-right','pk-dive-left','pk-dive-right');
- pkPenaltyOverlay.classList.add('pk-kick-'+shotZone);
- if(keeperZone!=='center')pkPenaltyOverlay.classList.add('pk-dive-'+keeperZone);
- const same=shotZone===keeperZone,scored=Math.random()<(same?.18:.84);
+ const team=s.turn%2;
+ const clamp=v=>Math.min(1,Math.max(0,v));
+ let shot={x:s.aimX,y:s.aimY},keeper;
+ if(s.mode==='1'&&team===1){
+  shot={x:.08+Math.random()*.84,y:.12+Math.random()*.72};
+  keeper={x:clamp(s.aimX+(Math.random()-.5)*.44),y:clamp(s.aimY+(Math.random()-.5)*.44)};
+ }else{
+  keeper={x:clamp(.5+(Math.random()-.5)*.7),y:clamp(.42+(Math.random()-.5)*.5)};
+ }
+ const dx=Math.abs(shot.x-keeper.x),dy=Math.abs(shot.y-keeper.y);
+ const saveChance=Math.max(0,Math.min(.9,.8-dx*1.3-dy*.6));
+ const scored=Math.random()>=saveChance;
+ const goal=pkPenaltyOverlay.querySelector('.pk-pen-goal'),ball=pkPenaltyOverlay.querySelector('.pk-pen-ball'),kp=pkPenaltyOverlay.querySelector('.pk-pen-keeper');
+ if(goal&&ball){
+  const g=goal.getBoundingClientRect(),b=ball.getBoundingClientRect();
+  const bc=b.left+b.width/2,byc=b.top+b.height/2;
+  const tx=g.left+shot.x*g.width,ty=g.top+shot.y*g.height;
+  pkPenaltyOverlay.style.setProperty('--bx',(tx-bc).toFixed(1)+'px');
+  pkPenaltyOverlay.style.setProperty('--by',(ty-byc).toFixed(1)+'px');
+  pkPenaltyOverlay.style.setProperty('--br',((shot.x-.5)*460).toFixed(0)+'deg');
+  pkPenaltyOverlay.style.setProperty('--bs',Math.max(.22,Math.min(.5,g.width/1600)).toFixed(2));
+  if(kp){
+   const k=kp.getBoundingClientRect(),kc=k.left+k.width/2;
+   const kx=g.left+keeper.x*g.width,ky=g.top+keeper.y*g.height;
+   pkPenaltyOverlay.style.setProperty('--kx',(kx-kc).toFixed(1)+'px');
+   pkPenaltyOverlay.style.setProperty('--kr',((keeper.x-.5)*40).toFixed(0)+'deg');
+   pkPenaltyOverlay.style.setProperty('--sx',(kx-bc).toFixed(1)+'px');
+   pkPenaltyOverlay.style.setProperty('--sy',(ky-byc-k.height*.34).toFixed(1)+'px');
+  }
+ }
+ pkPenaltyOverlay.classList.remove('pk-shot','pk-scored','pk-saved','pk-save-left','pk-save-right','pk-shot-left','pk-shot-center','pk-shot-right','pk-dive-left','pk-dive-right');
+ void pkPenaltyOverlay.offsetWidth;
+ pkPenaltyOverlay.classList.add('pk-shot');
+ pkPenaltyOverlay.classList.add(scored?'pk-scored':'pk-saved');
+ const callout=document.getElementById('pkPenCallout');
+ if(callout){callout.textContent=scored?'GOAL!':'SAVED!';callout.className='pk-pen-callout show'+(scored?'':' miss');}
  s.shots[team]++;if(scored)s.scores[team]++;
- s.message=(scored?'GOAL! ⚽':'SAVED! 🧤')+(same?' — THE KEEPER GUESSED RIGHT.':' — THE KEEPER WENT THE WRONG WAY.');
+ s.message=scored?'GOAL! ⚽':'SAVED! 🧤';
  const winner=pkPenaltyWinner();if(winner!==null){s.winner=winner;s.phase='finished';}else s.phase='result';
  pkPenaltyUi();
 }
 function pkPenaltyStart(){
- pkPenaltyState={mode:document.body.dataset.playerMode==='2'?'2':'1',turn:0,shots:[0,0],scores:[0,0],zone:'center',phase:'aim',winner:null,message:''};
+ pkPenaltyState={mode:document.body.dataset.playerMode==='2'?'2':'1',turn:0,shots:[0,0],scores:[0,0],aimX:.5,aimY:.5,preset:null,phase:'aim',winner:null,message:''};
  running=false;started=false;matchEnded=true;
  document.getElementById('clock').textContent='03:00';
  document.getElementById('startBtn').textContent='Penalty shootout complete — Reset to play';
@@ -324,11 +414,32 @@ window.pkPenaltyStart=pkPenaltyStart;
 function pkPenaltyActionClick(){
  const s=pkPenaltyState;if(!s)return;
  if(s.phase==='aim'){pkPenaltyKick();return;}
- if(s.phase==='result'){s.turn++;s.phase='aim';s.zone='center';s.message='';pkPenaltyUi();return;}
+ if(s.phase==='result'){s.turn++;s.phase='aim';s.aimX=.5;s.aimY=.5;s.preset=null;s.message='';pkPenaltyUi();return;}
  if(s.phase==='finished'){pkPenaltyOverlay.hidden=true;document.getElementById('pkExitGame').click();}
 }
-pkPenaltyOverlay.querySelectorAll('[data-penalty-zone]').forEach(b=>b.addEventListener('click',()=>{if(pkPenaltyState&&pkPenaltyState.phase==='aim'){pkPenaltyState.zone=b.dataset.penaltyZone;pkPenaltyUi();}}));
+const pkPenPresets={left:{x:.13,y:.42},center:{x:.5,y:.36},right:{x:.87,y:.42}};
+pkPenaltyOverlay.querySelectorAll('[data-penalty-zone]').forEach(b=>b.addEventListener('click',()=>{
+ const s=pkPenaltyState;if(!s||s.phase!=='aim')return;
+ const p=pkPenPresets[b.dataset.penaltyZone];if(!p)return;
+ s.aimX=p.x;s.aimY=p.y;s.preset=b.dataset.penaltyZone;pkPenaltyUi();
+}));
+const pkPenHit=document.getElementById('pkPenHitpad');
+if(pkPenHit){
+ const set=e=>{const t=e.touches&&e.touches[0]?e.touches[0]:e;pkPenaltyAimAt(t.clientX,t.clientY);};
+ pkPenHit.addEventListener('pointerdown',e=>{set(e);e.preventDefault();});
+ pkPenHit.addEventListener('pointermove',e=>{if(e.buttons||e.pointerType==='touch'){set(e);e.preventDefault();}});
+ pkPenHit.addEventListener('touchstart',e=>{set(e);e.preventDefault();},{passive:false});
+ pkPenHit.addEventListener('touchmove',e=>{set(e);e.preventDefault();},{passive:false});
+}
 document.getElementById('pkPenaltyAction').addEventListener('click',pkPenaltyActionClick);
+document.addEventListener('keydown',event=>{
+ if(!pkPenaltyState||pkPenaltyOverlay.hidden)return;
+ const s=pkPenaltyState,key=event.key;
+ if(key===' '||key==='Enter'){pkPenaltyActionClick();event.preventDefault();return;}
+ if(s.phase!=='aim')return;
+ const nudge={ArrowLeft:[-.08,0],a:[-.08,0],A:[-.08,0],ArrowRight:[.08,0],d:[.08,0],D:[.08,0],ArrowUp:[0,-.1],w:[0,-.1],W:[0,-.1],ArrowDown:[0,.1],s:[0,.1],S:[0,.1]}[key];
+ if(nudge){s.aimX=Math.min(.97,Math.max(.03,s.aimX+nudge[0]));s.aimY=Math.min(.94,Math.max(.06,s.aimY+nudge[1]));s.preset=null;pkPenaltyUi();event.preventDefault();}
+},true);
 const pkPenaltyEndButton=document.createElement('button');
 pkPenaltyEndButton.type='button';
 pkPenaltyEndButton.id='pkPenaltyEndGame';
