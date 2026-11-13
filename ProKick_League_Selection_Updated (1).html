@@ -59,6 +59,7 @@
 </style>
 <style>.pk-resumebtn{margin-top:14px;padding:13px 26px;border-radius:12px;border:1px solid #d7b45a;background:linear-gradient(135deg,#2b3d2f,#16241b);color:#f8df91;font-size:13px;font-weight:1000;letter-spacing:1.2px;box-shadow:0 8px 22px #0006;cursor:pointer}.pk-resumebtn:hover{background:linear-gradient(135deg,#3a5340,#1d2f23)}.pk-resumebtn[hidden]{display:none}</style></head>
 <body>
+
 <div class="app" id="app">
 <section id="pkHome" class="pk-screen"><div class="pk-ball">⚽</div><div class="pk-eyebrow">THE COMPETITIVE FOOTBALL GAME</div><h1>ProKick</h1><p>Build your team. Own the pitch.</p><button id="pkPlay" class="pk-bigbtn">PLAY <span>▶</span></button><button id="pkResumeTournament" class="pk-resumebtn" type="button" hidden>🏆 RESUME TOURNAMENT</button></section>
 <section id="pkLeagueSelect" class="pk-screen" hidden>
@@ -1797,7 +1798,7 @@ function advanceRound(){
     startCelebration(byId(state.champion));
     return;
   }
-  const winners=round.matches.map(m=>m.winner);
+  const winners=round.matches.map(m=>m.winner||(m.sa!==m.sb?(m.sa>m.sb?m.a:m.b):m.a));
   const next=[];
   for(let i=0;i<winners.length;i+=2)next.push(mkMatch(winners[i],winners[i+1]));
   state.rounds.push({name:round.short==='QF'?'Semi-Finals':'Final',short:round.short==='QF'?'SF':'F',matches:next});
@@ -1950,6 +1951,13 @@ async function playUserMatch(match,knockout,label){
     winner=userWon?state.selected:(match.a===state.selected?match.b:match.a);
   }else if(knockout&&sa!==sb){
     winner=sa>sb?match.a:match.b;
+  }
+  if(knockout&&!winner){
+    // A knockout tie must always produce a winner. If the shootout result was lost
+    // (engine closed mid-shootout), settle it here so the bracket never gets an empty slot.
+    const p=simPens(userTeam,oppTeam);
+    penA=userIsHome?p.sa:p.sb;penB=userIsHome?p.sb:p.sa;
+    winner=p.sa>p.sb?match.a:match.b;
   }
   return {sa,sb,penA,penB,winner};
 }
