@@ -277,9 +277,10 @@ function pkAwardKick(fouledTeam,x,y){
  foulFreeze=pen?1.5:1.0;
  document.getElementById('possession').textContent=pen?'PENALTY':'FREE KICK';
  showToast(pen?'PENALTY!':'FOUL!');
- if(taker&&pkSetPieceHuman(fouledTeam)){
-  if(pen)pkInMatchPenBegin(fouledTeam,taker,spot.x,spot.y);
-  else pkFreeKickBegin(fouledTeam,taker);
+ if(taker){
+  if(pen)pkInMatchPenBegin(fouledTeam,taker,spot.x,spot.y,!pkSetPieceHuman(fouledTeam));
+  else if(pkSetPieceHuman(fouledTeam))pkFreeKickBegin(fouledTeam,taker);
+  else pkOppFreeKickBegin(fouledTeam,taker);
  }
 }
 function pkSetPieceHuman(team){return team===0||document.body.dataset.playerMode==='2'||!!pkTwoVTwo;}
@@ -333,6 +334,26 @@ function pkFreeKickBegin(team,taker){
   },70);
  },9000);
 }
+function pkOppFreeKickBegin(team,taker){
+ if(!taker)return;
+ // The defender keeps the whole controller here, so no .pk-setpiece class and no pitch freeze.
+ pkSetPiece={kind:'free',team,taker,phase:'aim',mode:'opp',hold:false};
+ ball.owner=players.indexOf(taker);ball.isShot=false;ball.vx=0;ball.vy=0;
+ clearTimeout(pkSetPieceTimer);
+ pkSetPieceTimer=setTimeout(()=>{
+  if(!pkSetPiece||pkSetPiece.phase!=='aim'||pkSetPiece.mode!=='opp')return;
+  if(!running||matchEnded||goalSequence){pkSetPieceAfterKick();return;}
+  const t=pkSetPiece.taker;
+  lastShot=0;shoot(t);
+  setTimeout(()=>{
+   if(!pkSetPiece||pkSetPiece.phase!=='aim')return;
+   const dir=t.team===0?1:-1;
+   ball.owner=-1;ball.isShot=true;ball.shotRange=380;ball.keeperTried=false;
+   ball.vx=dir*(futsalMode?8.6:9.8);ball.vy=(H/2-ball.y)*.02;
+   pkSetPieceAfterKick();
+  },70);
+ },1500);
+}
 function pkSetPieceAfterKick(){
  if(!pkSetPiece||pkSetPiece.phase!=='aim')return;
  pkSetPiece=null;clearTimeout(pkSetPieceTimer);
@@ -363,7 +384,7 @@ reset=function(){
  pkSetPiece=null;clearTimeout(pkSetPieceTimer);
  document.body.classList.remove('pk-setpiece');
  const pen=document.getElementById('pkInMatchPen');
- if(pen){pen.hidden=true;pen.classList.remove('pk-im-shot','pk-im-saved');}
+ if(pen){pen.hidden=true;pen.classList.remove('pk-im-shot','pk-im-saved','pk-im-dive');}
  pkResetBase();
 };
 /* ---- IN-MATCH PENALTY: first-person view of the goal, tap anywhere to shoot there ---- */
@@ -398,10 +419,11 @@ pkImStyle.textContent=`
 document.head.appendChild(pkImStyle);
 const pkImOverlay=document.createElement('section');
 pkImOverlay.id='pkInMatchPen';pkImOverlay.hidden=true;
-pkImOverlay.innerHTML='<div class="pk-im-sky"></div><div class="pk-im-stands"></div><div class="pk-im-grass"></div><div class="pk-im-goal"><div class="pk-im-net"></div><div class="pk-im-keeper"></div><div class="pk-im-hitpad" id="pkImHitpad"></div><div class="pk-im-aim" id="pkImAim"></div></div><div class="pk-im-ball"><i></i></div><div class="pk-im-callout" id="pkImCallout"></div><div class="pk-im-head">PENALTY<b id="pkImTeam"></b></div><div class="pk-im-hint">TAP ANYWHERE TO SHOOT THERE</div>';
+pkImOverlay.innerHTML='<div class="pk-im-sky"></div><div class="pk-im-stands"></div><div class="pk-im-grass"></div><div class="pk-im-goal"><div class="pk-im-net"></div><div class="pk-im-keeper"></div><div class="pk-im-hitpad" id="pkImHitpad"></div><div class="pk-im-aim" id="pkImAim"></div></div><div class="pk-im-ball"><i></i></div><div class="pk-im-callout" id="pkImCallout"></div><div class="pk-im-head">PENALTY<b id="pkImTeam"></b></div><div class="pk-im-hint" id="pkImHint">TAP ANYWHERE TO SHOOT THERE</div>';
 document.body.appendChild(pkImOverlay);
-function pkInMatchPenBegin(team,taker,spotX,spotY){
- pkSetPiece={kind:'pen',team,taker,phase:'aim',spot:{x:spotX,y:spotY}};
+function pkInMatchPenBegin(team,taker,spotX,spotY,dive){
+ const isDive=!!dive;
+ pkSetPiece={kind:'pen',team,taker,phase:'aim',mode:isDive?'dive':'shoot',spot:{x:spotX,y:spotY}};
  pkImOverlay.hidden=false;
  pkImOverlay.classList.remove('pk-im-shot','pk-im-saved');
  ['--ibx','--iby','--ibr','--ibs','--ikx','--ikr','--isx','--isy'].forEach(v=>pkImOverlay.style.removeProperty(v));
@@ -409,7 +431,56 @@ function pkInMatchPenBegin(team,taker,spotX,spotY){
  if(b){b.style.transition='none';void b.offsetWidth;b.style.transition='';}
  const callout=document.getElementById('pkImCallout');callout.className='pk-im-callout';callout.textContent='';
  document.getElementById('pkImAim').style.display='none';
- document.getElementById('pkImTeam').textContent=(team===0?teams[home].name:teams[away].name)+' · TAP TO SHOOT';
+ pkImOverlay.classList.toggle('pk-im-dive',isDive);
+ const hint=document.getElementById('pkImHint');
+ if(hint)hint.textContent=isDive?'TAP WHERE THE KEEPER SHOULD DIVE':'TAP ANYWHERE TO SHOOT THERE';
+ document.getElementById('pkImTeam').textContent=(team===0?teams[home].name:teams[away].name)+(isDive?' · TAP TO DIVE':' · TAP TO SHOOT');
+}
+/* Opponent penalty: the player is the keeper and picks where to dive. */
+function pkInMatchPenDive(clientX,clientY){
+ const s=pkSetPiece;if(!s||s.kind!=='pen'||s.phase!=='aim'||s.mode!=='dive')return;
+ s.phase='flight';
+ const goal=pkImOverlay.querySelector('.pk-im-goal').getBoundingClientRect();
+ const ax=(clientX-goal.left)/goal.width,ay=(clientY-goal.top)/goal.height;
+ const diveX=Math.min(1.04,Math.max(-.04,ax)),diveY=Math.min(1.04,Math.max(-.04,ay));
+ const onTarget=Math.random()<.8;
+ let shotX,shotY;
+ if(onTarget){
+  shotX=Math.min(.95,Math.max(.05,.5+(Math.random()+Math.random()+Math.random()-1.5)*.36));
+  shotY=Math.min(.92,Math.max(.06,.36+(Math.random()+Math.random()-1)*.32));
+ }else{
+  shotX=Math.random()<.5?-.14:1.14;shotY=.04+Math.random()*.42;
+ }
+ const reach=Math.hypot(shotX-diveX,(shotY-diveY)*1.15);
+ const saved=onTarget&&reach<=.32;
+ const result=!onTarget?'miss':saved?'saved':'goal';
+ const ball=pkImOverlay.querySelector('.pk-im-ball'),kp=pkImOverlay.querySelector('.pk-im-keeper');
+ if(ball&&kp){
+  const b=ball.getBoundingClientRect(),k=kp.getBoundingClientRect();
+  const bc=b.left+b.width/2,byc=b.top+b.height/2;
+  const tx=goal.left+shotX*goal.width,ty=goal.top+shotY*goal.height;
+  const kx=goal.left+diveX*goal.width,ky=goal.top+diveY*goal.height;
+  pkImOverlay.style.setProperty('--ibx',(tx-bc).toFixed(1)+'px');
+  pkImOverlay.style.setProperty('--iby',(ty-byc).toFixed(1)+'px');
+  pkImOverlay.style.setProperty('--ibr',((shotX-.5)*430).toFixed(0)+'deg');
+  pkImOverlay.style.setProperty('--ibs',Math.max(.2,Math.min(.5,goal.width/1700)).toFixed(2));
+  pkImOverlay.style.setProperty('--ikx',(kx-(k.left+k.width/2)).toFixed(1)+'px');
+  pkImOverlay.style.setProperty('--ikr',((diveX-.5)*70).toFixed(0)+'deg');
+  pkImOverlay.style.setProperty('--isx',((diveX*goal.width+goal.left-bc)+(shotX<diveX?-46:46)).toFixed(1)+'px');
+  pkImOverlay.style.setProperty('--isy',(diveY*goal.height+goal.top-byc+k.height*.1).toFixed(1)+'px');
+ }
+ document.getElementById('pkImAim').style.display='none';
+ pkImOverlay.classList.remove('pk-im-shot','pk-im-saved');
+ void pkImOverlay.offsetWidth;
+ pkImOverlay.classList.add('pk-im-shot');
+ pkImLastShot={x:shotX,y:shotY,team:s.team};
+ const callout=document.getElementById('pkImCallout');
+ setTimeout(()=>{
+  if(result==='saved')pkImOverlay.classList.add('pk-im-saved');
+  callout.textContent=result==='saved'?'SAVED!':result==='miss'?'OFF TARGET!':'GOAL!';
+  callout.className='pk-im-callout show'+(result==='goal'?' miss':'');
+ },result==='saved'?330:480);
+ setTimeout(()=>pkInMatchPenFinish(result),result==='saved'?1450:1500);
 }
 function pkInMatchPenAimPreview(clientX,clientY){
  const s=pkSetPiece;if(!s||s.kind!=='pen'||s.phase!=='aim')return;
@@ -463,7 +534,7 @@ function pkInMatchPenShoot(clientX,clientY){
 function pkInMatchPenFinish(result){
  const s=pkSetPiece;pkSetPiece=null;
  pkImOverlay.hidden=true;
- pkImOverlay.classList.remove('pk-im-shot','pk-im-saved');
+ pkImOverlay.classList.remove('pk-im-shot','pk-im-saved','pk-im-dive');
  if(!s)return;
  const dir=s.team===0?1:-1;
  lastTouchPlayerIndex=players.indexOf(s.taker);lastTouchTeam=s.team;
@@ -483,7 +554,8 @@ function pkInMatchPenFinish(result){
 pkImOverlay.addEventListener('pointerdown',e=>{
  if(pkImOverlay.hidden)return;
  e.preventDefault();
- pkInMatchPenShoot(e.clientX,e.clientY);
+ if(pkSetPiece&&pkSetPiece.mode==='dive')pkInMatchPenDive(e.clientX,e.clientY);
+ else pkInMatchPenShoot(e.clientX,e.clientY);
 });
 pkImOverlay.addEventListener('pointermove',e=>{
  if(e.pointerType&&e.pointerType!=='mouse')return;
@@ -493,7 +565,7 @@ window.pkSetPieceState=()=>pkSetPiece;
 window.pkAwardKick=pkAwardKick;
 function update(dt){
  const realDt=dt;
- if(pkSetPiece&&pkSetPiece.phase==='aim')dt=0;
+ if(pkSetPiece&&pkSetPiece.phase==='aim'&&pkSetPiece.hold!==false)dt=0;
  if(running&&!matchEnded&&!futsalMode&&pkClockAdvance(realDt))return;
  if(goalSequence){
   goalSequence.elapsed+=dt;
