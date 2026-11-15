@@ -716,7 +716,7 @@ update=function(dt){
 };
 // Keep every End Game / exit control on the home screen, including the penalty overlay.
 (()=>{
- const home=document.getElementById('pkHome');
+ const homeScreen=document.getElementById('pkHome');
  const screenIds=['pkGameTypes','pkModes','pkSetup','pkCountdown'];
  function returnHome(){
   try{pkPenaltyState=null;}catch(_e){}
@@ -731,7 +731,7 @@ update=function(dt){
   const scoreB=document.getElementById('scoreB');if(scoreB)scoreB.textContent='0';
   const clock=document.getElementById('clock');if(clock)clock.textContent='00:00';
   screenIds.forEach(id=>{const el=document.getElementById(id);if(el)el.hidden=true;});
-  if(home){home.hidden=false;home.style.display='flex';home.style.visibility='visible';home.style.opacity='1';home.style.zIndex='2000';}
+  if(homeScreen){homeScreen.hidden=false;homeScreen.style.display='flex';homeScreen.style.visibility='visible';homeScreen.style.opacity='1';homeScreen.style.zIndex='2000';}
   const penalty=document.getElementById('pkPenaltyShootout');if(penalty){penalty.hidden=true;penalty.style.display='none';penalty.style.visibility='hidden';penalty.style.pointerEvents='none';penalty.classList.remove('pk-kick-left','pk-kick-center','pk-kick-right','pk-dive-left','pk-dive-right');}
   const victory=document.getElementById('pkPenaltyVictory');if(victory){victory.classList.remove('show');victory.style.display='none';}
   const difficulty=document.getElementById('pkDifficultyModal');if(difficulty)difficulty.hidden=true;
@@ -754,7 +754,7 @@ update=function(dt){
   badge.style.cssText='position:absolute;left:18px;bottom:18px;z-index:100001;padding:11px 16px;border:1px solid #f5d76e;border-radius:7px;background:#07150feF;color:#ffe58a;font-size:12px;font-weight:1000;letter-spacing:1.2px;box-shadow:0 4px 18px #0009;pointer-events:none;';
   overlay.appendChild(badge);
   const originalUi=pkPenaltyUi;
-  pkPenaltyUi=function(){originalUi();const s=pkPenaltyState;if(!s)return;const team=s.turn%2;badge.textContent='NOW SHOOTING · '+(s.mode==='1'&&team===1?teams[away].name:(team===0?teams[home].name:teams[away].name));};
+  pkPenaltyUi=function(){originalUi();const s=pkPenaltyState;if(!s)return;const team=s.turn%2;const shooterName=(s.mode==='1'&&team===1?(teams[away]||{}).name:(team===0?(teams[home]||{}).name:(teams[away]||{}).name))||'';badge.textContent='NOW SHOOTING'+(shooterName?' · '+shooterName:'');};
  }
 })();
 let futsalMode=false;
@@ -898,6 +898,7 @@ function pkTournamentTeam(key,cfg){
 }
 function pkTournamentEnd(){
   pkTournamentCtx.active=false;
+  const koCd=document.getElementById('pkKoCountdown');if(koCd)koCd.remove();
   window.pkMatchContext=null;
   const back=document.getElementById('pkTournamentBack');if(back)back.remove();
   const quickEnd=document.getElementById('pkQuickEnd');if(quickEnd)quickEnd.style.display='';
@@ -960,7 +961,18 @@ window.pkEngine={
           finish({sa:goalsA,sb:goalsB,penA:null,penB:null,winner:goalsA===goalsB?null:(goalsA>goalsB?0:1)});
         }
       },250);
-      document.getElementById('startBtn').click();
+      const koCdEl=document.createElement('div');
+      koCdEl.id='pkKoCountdown';
+      koCdEl.style.cssText='position:fixed;inset:0;z-index:1400;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 45%,rgba(11,36,23,.88),rgba(4,16,13,.94));color:#f0fdf4;font-size:clamp(96px,22vw,220px);font-weight:1000;letter-spacing:-4px;text-shadow:0 0 45px #4ade80a0;pointer-events:none';
+      document.body.appendChild(koCdEl);
+      let koCdN=3;
+      const koCdTick=()=>{
+        if(!pkTournamentCtx.active||done){koCdEl.remove();return;}
+        koCdEl.textContent=koCdN>0?String(koCdN):'KICK OFF!';
+        if(koCdN<0){koCdEl.remove();document.getElementById('startBtn').click();return;}
+        koCdN--;setTimeout(koCdTick,700);
+      };
+      koCdTick();
     });
   }
 };
