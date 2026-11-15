@@ -1611,7 +1611,6 @@ body[data-player-mode="2"].pk-match .field-wrap .gamepad .joystick-wrap{
  const setup=document.getElementById('pkSetup'),countdown=document.getElementById('pkCountdown');
  function showOnly(screen){[home,league,types,modes,setup,countdown].forEach(s=>{if(s)s.hidden=s!==screen;});}
  document.getElementById('pkPlay').addEventListener('click',()=>showOnly(league));
- window.pkOpenPlay=()=>showOnly(league);
  document.getElementById('pkLeagueBack').addEventListener('click',()=>showOnly(home));
  document.getElementById('pkBazelLeague').addEventListener('click',()=>showOnly(types));
  document.getElementById('pkGameTypesBack').addEventListener('click',()=>showOnly(league));
@@ -2273,6 +2272,7 @@ function renderStage(){
   if(state.phase==='group')renderGroupStage();
   else if(state.phase==='ko')renderKnockout();
   else if(state.phase==='done')renderDone();
+  pkApexSave();
 }
 
 /* ---------- LIVE MATCH MODAL ---------- */
@@ -2527,6 +2527,7 @@ function goHome(){
   document.body.classList.remove('pk-match','pk-setup');
   state.busy=false;
   window.pkApexInProgress=state.phase==='group'||state.phase==='ko';
+  pkApexSave();
   if(window.pkSyncResume)window.pkSyncResume();
 }
 window.pkResumeApex=function(){
@@ -2544,6 +2545,7 @@ window.pkResumeApex=function(){
 };
 function resetApex(){
   window.pkApexInProgress=false;
+  try{localStorage.removeItem('pkApexSave.v1');}catch(e){}
   if(window.pkSyncResume)window.pkSyncResume();
   state.selected=null;state.group=null;state.groups={};state.phase='setup';
   state.rounds=[];state.roundIndex=0;state.champion=null;state.busy=false;
@@ -2553,6 +2555,39 @@ function resetApex(){
   renderSetup();
 }
 window.pkResetApex=resetApex;
+
+/* ---------- TOURNAMENT SAVE (installed app only) ---------- */
+const PK_SAVE_KEY='pkApexSave.v1';
+const PK_APP_MODE=(()=>{try{return !!(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true||/[?&]app=1(&|$)/.test(location.search);}catch(e){return false;}})();
+function pkApexSave(){
+  if(!PK_APP_MODE)return;
+  try{
+    if(state.phase==='group'||state.phase==='ko'){
+      localStorage.setItem(PK_SAVE_KEY,JSON.stringify({v:1,savedAt:Date.now(),selected:state.selected,group:state.group,groups:state.groups,phase:state.phase,rounds:state.rounds,roundIndex:state.roundIndex,champion:state.champion}));
+    }else{
+      localStorage.removeItem(PK_SAVE_KEY);
+    }
+  }catch(e){}
+}
+function pkApexRestore(){
+  if(!PK_APP_MODE)return false;
+  let d=null;
+  try{d=JSON.parse(localStorage.getItem(PK_SAVE_KEY)||'null');}catch(e){d=null;}
+  if(!d||d.v!==1)return false;
+  if(d.phase!=='group'&&d.phase!=='ko')return false;
+  if(!d.selected||!byId(d.selected))return false;
+  if(!d.groups||!GROUPS.every(g=>d.groups[g]))return false;
+  if(!Array.isArray(d.rounds))return false;
+  state.selected=d.selected;state.group=d.group;state.groups=d.groups;state.phase=d.phase;
+  state.rounds=d.rounds;state.roundIndex=d.roundIndex||0;state.champion=d.champion||null;state.busy=false;
+  window.pkApexInProgress=true;
+  if(window.pkSyncResume)window.pkSyncResume();
+  return true;
+}
+window.pkApexSaveNow=pkApexSave;
+window.pkApexRestoreSaved=pkApexRestore;
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')pkApexSave();});
+window.addEventListener('pagehide',()=>pkApexSave());
 function openApex(){
   resetApex();
   $('apexRoot').hidden=false;
@@ -2687,43 +2722,12 @@ window.pkSyncResume=function(){
 window.addEventListener('DOMContentLoaded',()=>{
   const b=document.getElementById('pkResumeTournament');
   if(b)b.addEventListener('click',()=>{if(window.pkResumeApex)window.pkResumeApex();});
+  if(window.pkApexRestoreSaved)window.pkApexRestoreSaved();
   window.pkSyncResume();
 });
 </script>
 
-<div id="pkTournamentConfirm" class="pk-confirm-modal" hidden role="dialog" aria-modal="true" aria-labelledby="pkTournamentConfirmTitle"><div class="pk-confirm-card"><div class="pk-eyebrow">TOURNAMENT IN PROGRESS</div><h2 id="pkTournamentConfirmTitle">Finish the tournament first</h2><p>You can play when the tournament is done. Would you like to lose your progress or continue the tournament?</p><div class="pk-confirm-actions"><button type="button" id="pkTournamentLose" class="pk-confirm-lose">LOSE PROGRESS</button><button type="button" id="pkTournamentContinue" class="pk-confirm-continue">CONTINUE TOURNAMENT</button></div></div></div>
-<style>
-.pk-confirm-modal{position:fixed;inset:0;z-index:1250;display:flex;align-items:center;justify-content:center;padding:20px;background:#020b08dc;backdrop-filter:blur(8px)}.pk-confirm-modal[hidden]{display:none}.pk-confirm-card{width:min(560px,100%);padding:clamp(22px,4vw,34px);border:1px solid #3b6849;border-radius:24px;background:linear-gradient(145deg,#102a1c,#07150e);box-shadow:0 24px 80px #0009;text-align:center;color:#f0fdf4}.pk-confirm-card h2{font-size:clamp(24px,4.4vw,34px);margin:12px 0}.pk-confirm-card p{color:#b7d8c1;line-height:1.6;max-width:46ch;margin:0 auto 22px}.pk-confirm-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}.pk-confirm-lose{padding:14px 22px;border-radius:14px;border:2px solid #7f2a2a;background:#2a1414;color:#fca5a5;font-weight:900;letter-spacing:.6px;cursor:pointer}.pk-confirm-lose:hover{border-color:#ef4444;background:#3a1a1a}.pk-confirm-continue{padding:14px 22px;border-radius:14px;border:0;background:linear-gradient(135deg,#4ade80,#16a34a);color:#05210f;font-weight:1000;letter-spacing:.7px;box-shadow:0 8px 22px #0005;cursor:pointer}
-@media(max-width:520px){.pk-confirm-actions{flex-direction:column}.pk-confirm-lose,.pk-confirm-continue{width:100%}}
-</style>
-<script>
-(()=>{
-  const modal=document.getElementById('pkTournamentConfirm');
-  const lose=document.getElementById('pkTournamentLose');
-  const cont=document.getElementById('pkTournamentContinue');
-  if(!modal||!lose||!cont)return;
-  const close=()=>{modal.hidden=true;};
-  // Capture phase on document so the PLAY handlers never reach the menu screens.
-  document.addEventListener('click',event=>{
-    const target=event.target;
-    if(!target||!target.closest||!target.closest('#pkPlay'))return;
-    if(!window.pkApexInProgress)return;
-    event.preventDefault();
-    event.stopPropagation();
-    modal.hidden=false;
-  },true);
-  cont.addEventListener('click',()=>{close();if(window.pkResumeApex)window.pkResumeApex();});
-  lose.addEventListener('click',()=>{
-    close();
-    if(window.pkResetApex)window.pkResetApex();
-    window.pkApexInProgress=false;
-    if(window.pkSyncResume)window.pkSyncResume();
-    if(window.pkOpenPlay)window.pkOpenPlay();
-  });
-  modal.addEventListener('click',event=>{if(event.target===modal)close();});
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!modal.hidden)close();});
-})();
-</script>
+
 
 
 <script>
