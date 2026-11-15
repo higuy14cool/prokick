@@ -2482,15 +2482,25 @@ async function playGroupMatch(gid,idx){
   const g=state.groups[gid];const m=g&&g.matches[idx];
   if(!g||!m||m.played||g.done)return;
   state.busy=true;
-  const res=await playUserMatch(m,false,'GROUP '+gid);
-  if(res){
-    m.sa=res.sa;m.sb=res.sb;m.played=true;
-    const um=g.matches.filter(x=>x.a===g.meId||x.b===g.meId);
-    if(um.every(x=>x.played)){
-      const third=g.matches.find(x=>!x.played);
-      if(third){const [sa,sb]=simScore(byId(third.a),byId(third.b));third.sa=sa;third.sb=sb;third.played=true;}
-      g.done=true;
+  try{
+    // Group ties are final: the engine gets allowDraw, so a level score never
+    // reaches extra time or a shootout here.
+    const res=await playUserMatch(m,false,'GROUP '+gid);
+    if(res){
+      m.sa=res.sa;m.sb=res.sb;m.played=true;
+      const um=g.matches.filter(x=>x.a===g.meId||x.b===g.meId);
+      if(um.every(x=>x.played)){
+        const third=g.matches.find(x=>!x.played);
+        if(third){const [sa,sb]=simScore(byId(third.a),byId(third.b));third.sa=sa;third.sb=sb;third.played=true;}
+        g.done=true;
+      }
     }
+  }catch(err){
+    // A failure inside the match engine must never leave the tournament locked.
+    state.busy=false;
+    renderStage();
+    if(window.console&&console.error)console.error(err);
+    return;
   }
   state.busy=false;
   if(g.done){
@@ -2506,7 +2516,15 @@ async function playKo(ri,mi){
   if(!m||m.played)return;
   state.busy=true;
   const round=state.rounds[ri];
-  const res=await playUserMatch(m,true,round.name);
+  let res=null;
+  try{
+    res=await playUserMatch(m,true,round.name);
+  }catch(err){
+    state.busy=false;
+    renderStage();
+    if(window.console&&console.error)console.error(err);
+    return;
+  }
   if(res){
     m.sa=res.sa;m.sb=res.sb;m.penA=res.penA;m.penB=res.penB;m.winner=res.winner;m.played=true;
     if(res.winner&&res.winner!==state.selected)state.out=true;
