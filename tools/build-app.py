@@ -19,8 +19,12 @@ HEAD_ADD = """<meta name="description" content="ProKick - free browser football 
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ProKick">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+.pk-ball img.pk-applogo{width:clamp(84px,13vw,116px);height:auto;display:block;border-radius:24%;box-shadow:0 10px 26px #0006}
+</style>
 """
 
 SW_REGISTER = """<script>
@@ -44,6 +48,10 @@ REPLACEMENTS = [
         "audio/crowd-cheer.mp3",
     ),
     ('<title>ProKick</title>', '<title>ProKick</title>\n' + HEAD_ADD),
+    (
+        '<div class="pk-ball">⚽</div>',
+        '<div class="pk-ball"><img class="pk-applogo" src="icons/icon-192.png" alt="ProKick logo" width="116" height="116"></div>',
+    ),
 ]
 
 
