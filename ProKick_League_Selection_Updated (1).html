@@ -57,7 +57,20 @@
 @media(max-width:600px){.action-pad{grid-template-columns:repeat(2,72px);grid-template-rows:repeat(2,72px);gap:7px}.action-btn{font-size:9px}.action-icon{font-size:20px}}
 @media(max-width:390px){.action-pad{grid-template-columns:repeat(2,60px);grid-template-rows:repeat(2,60px);gap:5px}.action-btn{font-size:8px}.action-icon{font-size:17px}}
 </style>
-<style>.pk-resumebtn{margin-top:14px;padding:13px 26px;border-radius:12px;border:1px solid #d7b45a;background:linear-gradient(135deg,#2b3d2f,#16241b);color:#f8df91;font-size:13px;font-weight:1000;letter-spacing:1.2px;box-shadow:0 8px 22px #0006;cursor:pointer}.pk-resumebtn:hover{background:linear-gradient(135deg,#3a5340,#1d2f23)}.pk-resumebtn[hidden]{display:none}</style></head>
+<style>.pk-resumebtn{margin-top:14px;padding:13px 26px;border-radius:12px;border:1px solid #d7b45a;background:linear-gradient(135deg,#2b3d2f,#16241b);color:#f8df91;font-size:13px;font-weight:1000;letter-spacing:1.2px;box-shadow:0 8px 22px #0006;cursor:pointer}.pk-resumebtn:hover{background:linear-gradient(135deg,#3a5340,#1d2f23)}.pk-resumebtn[hidden]{display:none}
+.pk-cancelbtn{margin-top:10px;padding:11px 22px;border-radius:12px;border:1px solid #7f2d2d;background:#261418;color:#fca5a5;font-size:12px;font-weight:950;letter-spacing:1.1px;cursor:pointer}
+.pk-cancelbtn:hover{background:#3a1c21}
+.pk-cancelbtn[hidden]{display:none}
+.pk-confirm{position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;padding:22px;background:#02100bcc;backdrop-filter:blur(3px)}
+.pk-confirm[hidden]{display:none}
+.pk-confirm-card{width:min(420px,94vw);background:linear-gradient(160deg,#12281d,#0a1710);border:1px solid #3f6b52;border-radius:16px;padding:22px;box-shadow:0 24px 60px #000a;text-align:center;color:#f0fdf4}
+.pk-confirm-card h3{margin:0 0 8px;font-size:17px;letter-spacing:.6px}
+.pk-confirm-card p{margin:0 0 18px;font-size:13px;line-height:1.5;color:#b7d8c1}
+.pk-confirm-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.pk-confirm-actions button{padding:12px 18px;border-radius:12px;font-weight:950;font-size:12px;letter-spacing:.6px;cursor:pointer;border:1px solid #ffffff30;background:#1b3a29;color:#e9fdf1}
+.pk-confirm-actions button.pk-danger-btn{background:#3a1618;border-color:#a33;color:#ffc9c9}
+.pk-confirm-actions button.pk-ghost-btn{background:transparent;color:#b7d8c1}
+</style></head>
 <body>
 <div id="pkSplash" class="pk-splash" role="status" aria-label="Loading ProKick">
 <style>
@@ -104,7 +117,7 @@
 
 
 <div class="app" id="app">
-<section id="pkHome" class="pk-screen"><div class="pk-ball">⚽</div><div class="pk-eyebrow">THE COMPETITIVE FOOTBALL GAME</div><h1>ProKick</h1><p>Build your team. Own the pitch.</p><button id="pkPlay" class="pk-bigbtn">PLAY <span>▶</span></button><button id="pkResumeTournament" class="pk-resumebtn" type="button" hidden>🏆 RESUME TOURNAMENT</button><div class="pk-copyright">© 2026 POWERPLAY Studios</div></section>
+<section id="pkHome" class="pk-screen"><div class="pk-ball">⚽</div><div class="pk-eyebrow">THE COMPETITIVE FOOTBALL GAME</div><h1>ProKick</h1><p>Build your team. Own the pitch.</p><button id="pkPlay" class="pk-bigbtn">PLAY <span>▶</span></button><button id="pkResumeTournament" class="pk-resumebtn" type="button" hidden>🏆 RESUME TOURNAMENT</button><button id="pkCancelTournament" class="pk-cancelbtn" type="button" hidden>✕ CANCEL TOURNAMENT</button><div class="pk-copyright">© 2026 POWERPLAY Studios</div></section>
 <section id="pkLeagueSelect" class="pk-screen" hidden>
   <button id="pkLeagueBack" class="pk-back pk-corner-back">← Go Back</button>
   <div class="pk-eyebrow">CHOOSE YOUR COMPETITION</div>
@@ -152,7 +165,11 @@ let goalSequence=null,replayFrames=[],replayCapture=0,lastTouchPlayerIndex=-1,la
 let pkClock=null,pkPenGoalCtx=null,pkImLastShot=null;
 let players=[],selectedPlayerIndex=10,p2ControlledIndex=20,ball={x:500,y:300,vx:0,vy:0,r:9,owner:0};
 window.pkSetTeamColor=(team,color,dark)=>{const key=team===0?home:away;teams[key].color=color;teams[key].dark=dark;renderSignature='';updateTeams();draw();};
-const replayBanner=document.createElement('div');replayBanner.className='goal-replay-banner';replayBanner.innerHTML='<span class="replay-dot"></span><span id="replayBannerText">GOAL REPLAY</span>';document.querySelector('.field-wrap').appendChild(replayBanner);const skipReplayButton=document.createElement('button');skipReplayButton.type='button';skipReplayButton.className='skip-replay-btn';skipReplayButton.textContent='⏭ SKIP REPLAY';skipReplayButton.setAttribute('aria-label','Skip goal replay');skipReplayButton.addEventListener('click',()=>{if(goalSequence&&goalSequence.stage==='replay')goalSequence.elapsed=futsalMode?6:18;});document.querySelector('.field-wrap').appendChild(skipReplayButton);
+const replayBanner=document.createElement('div');replayBanner.className='goal-replay-banner';replayBanner.innerHTML='<span class="replay-dot"></span><span id="replayBannerText">GOAL REPLAY</span>';document.querySelector('.field-wrap').appendChild(replayBanner);const skipReplayButton=document.createElement('button');skipReplayButton.type='button';skipReplayButton.className='skip-replay-btn';skipReplayButton.textContent='⏭ SKIP REPLAY';skipReplayButton.setAttribute('aria-label','Skip goal replay');skipReplayButton.addEventListener('click',()=>{
+ if(!goalSequence)return;
+ if(goalSequence.stage==='replay')goalSequence.elapsed=pkReplayDuration()+0.05;
+ else if(goalSequence.stage==='celebration')goalSequence.elapsed=2.2;
+});document.querySelector('.field-wrap').appendChild(skipReplayButton);
 function makePlayers(){players=[];const defaultFormation=[[-.46,0],[-.34,-.3],[-.34,0],[-.34,.3],[-.2,-.42],[-.2,-.14],[-.2,.14],[-.2,.42],[-.02,-.28],[-.02,.28],[.12,0]];const chickenFormation=[[-.46,0],[-.32,-.29],[-.34,0],[-.32,.29],[-.17,0],[-.06,-.18],[-.06,.18],[.08,0],[.20,-.29],[.23,0],[-.06,.34]];const chickenNumbers=[1,2,4,5,9,8,6,7,11,10,12];const homeFormation=home==='chicken'?chickenFormation:defaultFormation;const awayFormation=away==='chicken'?chickenFormation:defaultFormation;for(let i=0;i<11;i++){const hx=W/2+homeFormation[i][0]*(W*.85),hy=H/2+homeFormation[i][1]*(H*.82);players.push({x:hx,y:hy,homeX:hx,homeY:hy,team:0,n:i,number:home==='chicken'?chickenNumbers[i]:i+1,r:i===0?16:13,vx:0,vy:0});}for(let i=0;i<11;i++){const ax=W/2-awayFormation[i][0]*(W*.85),ay=H/2+awayFormation[i][1]*(H*.82);players.push({x:ax,y:ay,homeX:ax,homeY:ay,team:1,n:i,number:away==='chicken'?chickenNumbers[i]:i+1,r:i===0?16:13,vx:0,vy:0});}ball={x:W/2,y:H/2,vx:0,vy:0,r:9,owner:home==='chicken'?9:10};}
 function getHumanPlayer(){if(ball.owner>=0&&players[ball.owner]&&players[ball.owner].team===0)return players[ball.owner];if(players[selectedPlayerIndex]&&players[selectedPlayerIndex].team===0)return players[selectedPlayerIndex];return players.find(p=>p.team===0&&p.number===(home==='chicken'?10:11))||players[10];}
 function switchPlayer(){if(ball.owner>=0&&players[ball.owner]&&players[ball.owner].team===0){showToast('YOU HAVE THE BALL');return;}const teammates=players.map((p,i)=>({p,i})).filter(o=>o.p.team===0);if(!teammates.length)return;let current=teammates.findIndex(o=>o.i===selectedPlayerIndex);selectedPlayerIndex=teammates[(current+1+teammates.length)%teammates.length].i;showToast('PLAYER #'+teammates.find(o=>o.i===selectedPlayerIndex).p.number+' SELECTED');}
@@ -2100,7 +2117,7 @@ const TEAMS=[
 const GROUPS=['A','B','C','D'];
 const $=id=>document.getElementById(id);
 const byId=id=>TEAMS.find(t=>t.id===id);
-const state={selected:null,group:null,groups:{},phase:'setup',rounds:[],roundIndex:0,champion:null,busy:false};
+const state={selected:null,group:null,groups:{},phase:'setup',rounds:[],roundIndex:0,champion:null,busy:false,out:false};
 let gen=0,celebTimer=null,confettiRaf=null,lastSkip=0;
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -2160,7 +2177,7 @@ function startTournament(){
   const pool=shuffle(TEAMS.filter(t=>t.id!==me).map(t=>t.id));
   const groups={};groups[state.group]=[me,pool.shift(),pool.shift()];
   GROUPS.filter(g=>g!==state.group).forEach(g=>{groups[g]=[pool.shift(),pool.shift(),pool.shift()];});
-  state.groups={};state.rounds=[];state.roundIndex=0;state.champion=null;state.phase='group';
+  state.groups={};state.rounds=[];state.roundIndex=0;state.champion=null;state.phase='group';state.out=false;
   GROUPS.forEach(g=>{
     const grp=makeGroup(g,groups[g],g===state.group?me:null);
     state.groups[g]=grp;
@@ -2255,6 +2272,7 @@ function renderDone(){
   const champ=byId(state.champion);
   let html='<div class="axp-eyebrow">TOURNAMENT COMPLETE</div><h1 class="axp-title">'+champ.name+'</h1>'+
     '<p class="axp-sub">Champions of the Apex Cup.</p>'+
+    (state.out?'<p class="axp-note axp-elimnote">You were eliminated from this tournament — the remaining ties were simulated.</p>':'')+
     '<div class="axp-bracket">'+state.rounds.map((r,ri)=>
       '<div class="axp-round"><div class="axp-roundhead">'+r.name.toUpperCase()+'</div>'+r.matches.map((m,mi)=>koMatchCard(m,ri,mi)).join('')+'</div>'
     ).join('')+'</div>'+
@@ -2278,7 +2296,7 @@ function advanceRound(){
     state.champion=round.matches[0].winner;
     state.phase='done';
     renderStage();
-    startCelebration(byId(state.champion));
+    if(!state.out)startCelebration(byId(state.champion));
     return;
   }
   const winners=round.matches.map(m=>m.winner||(m.sa!==m.sb?(m.sa>m.sb?m.a:m.b):m.a));
@@ -2300,6 +2318,20 @@ function simulateRound(){
   if(!round)return;
   round.matches.forEach(m=>{if(!m.played)simulateKo(m);});
   if(round.matches.every(m=>m.played))advanceRound(); else renderStage();
+}
+function simRestOfTournament(){
+  let guard=0;
+  while(state.phase!=='done'&&guard++<12){
+    if(state.phase==='group'){
+      GROUPS.forEach(g=>{const grp=state.groups[g];if(grp&&!grp.done)playGroupSilent(grp);});
+      buildQuarterFinals();
+    }else{
+      const round=currentRound();
+      if(!round)return;
+      round.matches.forEach(m=>{if(!m.played)simulateKo(m);});
+      advanceRound();
+    }
+  }
 }
 function renderStage(){
   if(state.phase==='group')renderGroupStage();
@@ -2461,7 +2493,12 @@ async function playGroupMatch(gid,idx){
     }
   }
   state.busy=false;
+  if(g.done){
+    const idx=standings(g).findIndex(r=>r.id===state.selected);
+    if(idx>1)state.out=true;
+  }
   renderStage();
+  if(state.out&&state.phase!=='done')simRestOfTournament();
 }
 async function playKo(ri,mi){
   if(state.busy)return;
@@ -2472,8 +2509,10 @@ async function playKo(ri,mi){
   const res=await playUserMatch(m,true,round.name);
   if(res){
     m.sa=res.sa;m.sb=res.sb;m.penA=res.penA;m.penB=res.penB;m.winner=res.winner;m.played=true;
+    if(res.winner&&res.winner!==state.selected)state.out=true;
     state.busy=false;
     autoFinishRound();
+    if(state.out&&state.phase!=='done')simRestOfTournament();
   }else{state.busy=false;}
 }
 
@@ -2580,7 +2619,7 @@ function resetApex(){
   window.pkApexInProgress=false;
   try{localStorage.removeItem('pkApexSave.v1');}catch(e){}
   if(window.pkSyncResume)window.pkSyncResume();
-  state.selected=null;state.group=null;state.groups={};state.phase='setup';
+  state.selected=null;state.group=null;state.groups={};state.phase='setup';state.out=false;
   state.rounds=[];state.roundIndex=0;state.champion=null;state.busy=false;
   $('axpSetup').hidden=false;$('axpStage').hidden=true;
   $('axpCelebration').hidden=true;$('axpMatchModal').hidden=true;
@@ -2596,7 +2635,7 @@ function pkApexSave(){
   if(!PK_APP_MODE)return;
   try{
     if(state.phase==='group'||state.phase==='ko'){
-      localStorage.setItem(PK_SAVE_KEY,JSON.stringify({v:1,savedAt:Date.now(),selected:state.selected,group:state.group,groups:state.groups,phase:state.phase,rounds:state.rounds,roundIndex:state.roundIndex,champion:state.champion}));
+      localStorage.setItem(PK_SAVE_KEY,JSON.stringify({v:1,savedAt:Date.now(),selected:state.selected,group:state.group,groups:state.groups,phase:state.phase,rounds:state.rounds,roundIndex:state.roundIndex,champion:state.champion,out:!!state.out}));
     }else{
       localStorage.removeItem(PK_SAVE_KEY);
     }
@@ -2612,7 +2651,7 @@ function pkApexRestore(){
   if(!d.groups||!GROUPS.every(g=>d.groups[g]))return false;
   if(!Array.isArray(d.rounds))return false;
   state.selected=d.selected;state.group=d.group;state.groups=d.groups;state.phase=d.phase;
-  state.rounds=d.rounds;state.roundIndex=d.roundIndex||0;state.champion=d.champion||null;state.busy=false;
+  state.rounds=d.rounds;state.roundIndex=d.roundIndex||0;state.champion=d.champion||null;state.busy=false;state.out=!!d.out;
   window.pkApexInProgress=true;
   if(window.pkSyncResume)window.pkSyncResume();
   return true;
@@ -2621,11 +2660,27 @@ window.pkApexSaveNow=pkApexSave;
 window.pkApexRestoreSaved=pkApexRestore;
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')pkApexSave();});
 window.addEventListener('pagehide',()=>pkApexSave());
-function openApex(){
+function openApexFresh(){
   resetApex();
   $('apexRoot').hidden=false;
   const league=document.getElementById('pkLeagueSelect');if(league)league.hidden=true;
   $('apexRoot').scrollTop=0;
+}
+function openApex(){
+  if(state.phase==='group'||state.phase==='ko'){
+    if(!window.pkAsk){openApexFresh();return;}
+    window.pkAsk({
+      title:'Tournament in progress',
+      text:'You already have an Apex Cup run going. Starting a new tournament discards your current progress for good.',
+      yes:'LOSE PROGRESS & START NEW',
+      no:'CONTINUE TOURNAMENT'
+    }).then(loseIt=>{
+      if(loseIt)openApexFresh();
+      else if(window.pkResumeApex)window.pkResumeApex();
+    });
+    return;
+  }
+  openApexFresh();
 }
 
 /* ---------- EVENTS ---------- */
@@ -2751,10 +2806,59 @@ else initApex();
 window.pkSyncResume=function(){
   const b=document.getElementById('pkResumeTournament');
   if(b)b.hidden=!window.pkApexInProgress;
+  const c=document.getElementById('pkCancelTournament');
+  if(c)c.hidden=!window.pkApexInProgress;
+};
+window.pkAsk=function(o){
+  return new Promise(resolve=>{
+    let m=document.getElementById('pkConfirm');
+    if(!m){
+      m=document.createElement('div');m.id='pkConfirm';m.className='pk-confirm';m.hidden=true;
+      m.innerHTML='<div class="pk-confirm-card" role="dialog" aria-modal="true" aria-labelledby="pkConfirmTitle">'+
+        '<h3 id="pkConfirmTitle"></h3><p id="pkConfirmText"></p>'+
+        '<div class="pk-confirm-actions"><button type="button" class="pk-ghost-btn" id="pkConfirmNo"></button>'+
+        '<button type="button" class="pk-danger-btn" id="pkConfirmYes"></button></div></div>';
+      document.body.appendChild(m);
+    }
+    const yes=document.getElementById('pkConfirmYes'),no=document.getElementById('pkConfirmNo');
+    let settled=false;
+    function done(v){
+      if(settled)return;settled=true;
+      m.hidden=true;document.removeEventListener('keydown',onKey);
+      yes.onclick=null;no.onclick=null;
+      resolve(v);
+    }
+    function onKey(e){if(e.key==='Escape')done(false);}
+    document.getElementById('pkConfirmTitle').textContent=o.title||'';
+    document.getElementById('pkConfirmText').textContent=o.text||'';
+    yes.textContent=o.yes||'YES';
+    no.textContent=o.no||'CANCEL';
+    yes.onclick=()=>done(true);
+    no.onclick=()=>done(false);
+    document.addEventListener('keydown',onKey);
+    m.hidden=false;
+    try{no.focus();}catch(e){}
+  });
 };
 window.addEventListener('DOMContentLoaded',()=>{
   const b=document.getElementById('pkResumeTournament');
   if(b)b.addEventListener('click',()=>{if(window.pkResumeApex)window.pkResumeApex();});
+  const c=document.getElementById('pkCancelTournament');
+  if(c)c.addEventListener('click',()=>{
+    window.pkAsk({
+      title:'Cancel tournament?',
+      text:'This ends your Apex Cup run and erases the progress you have made. You cannot resume it afterwards.',
+      yes:'CANCEL TOURNAMENT',
+      no:'KEEP PLAYING'
+    }).then(ok=>{
+      if(!ok)return;
+      if(window.pkResetApex)window.pkResetApex();
+      window.pkApexInProgress=false;
+      window.pkSyncResume();
+      const home=document.getElementById('pkHome');
+      if(home){home.hidden=false;}
+    });
+  });
   if(window.pkApexRestoreSaved)window.pkApexRestoreSaved();
   window.pkSyncResume();
 });
