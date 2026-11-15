@@ -1611,6 +1611,7 @@ body[data-player-mode="2"].pk-match .field-wrap .gamepad .joystick-wrap{
  const setup=document.getElementById('pkSetup'),countdown=document.getElementById('pkCountdown');
  function showOnly(screen){[home,league,types,modes,setup,countdown].forEach(s=>{if(s)s.hidden=s!==screen;});}
  document.getElementById('pkPlay').addEventListener('click',()=>showOnly(league));
+ window.pkOpenPlay=()=>showOnly(league);
  document.getElementById('pkLeagueBack').addEventListener('click',()=>showOnly(home));
  document.getElementById('pkBazelLeague').addEventListener('click',()=>showOnly(types));
  document.getElementById('pkGameTypesBack').addEventListener('click',()=>showOnly(league));
@@ -2551,6 +2552,7 @@ function resetApex(){
   $('axpStageChip').textContent='TEAM SELECTION';
   renderSetup();
 }
+window.pkResetApex=resetApex;
 function openApex(){
   resetApex();
   $('apexRoot').hidden=false;
@@ -2687,6 +2689,40 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(b)b.addEventListener('click',()=>{if(window.pkResumeApex)window.pkResumeApex();});
   window.pkSyncResume();
 });
+</script>
+
+<div id="pkTournamentConfirm" class="pk-confirm-modal" hidden role="dialog" aria-modal="true" aria-labelledby="pkTournamentConfirmTitle"><div class="pk-confirm-card"><div class="pk-eyebrow">TOURNAMENT IN PROGRESS</div><h2 id="pkTournamentConfirmTitle">Finish the tournament first</h2><p>You can play when the tournament is done. Would you like to lose your progress or continue the tournament?</p><div class="pk-confirm-actions"><button type="button" id="pkTournamentLose" class="pk-confirm-lose">LOSE PROGRESS</button><button type="button" id="pkTournamentContinue" class="pk-confirm-continue">CONTINUE TOURNAMENT</button></div></div></div>
+<style>
+.pk-confirm-modal{position:fixed;inset:0;z-index:1250;display:flex;align-items:center;justify-content:center;padding:20px;background:#020b08dc;backdrop-filter:blur(8px)}.pk-confirm-modal[hidden]{display:none}.pk-confirm-card{width:min(560px,100%);padding:clamp(22px,4vw,34px);border:1px solid #3b6849;border-radius:24px;background:linear-gradient(145deg,#102a1c,#07150e);box-shadow:0 24px 80px #0009;text-align:center;color:#f0fdf4}.pk-confirm-card h2{font-size:clamp(24px,4.4vw,34px);margin:12px 0}.pk-confirm-card p{color:#b7d8c1;line-height:1.6;max-width:46ch;margin:0 auto 22px}.pk-confirm-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}.pk-confirm-lose{padding:14px 22px;border-radius:14px;border:2px solid #7f2a2a;background:#2a1414;color:#fca5a5;font-weight:900;letter-spacing:.6px;cursor:pointer}.pk-confirm-lose:hover{border-color:#ef4444;background:#3a1a1a}.pk-confirm-continue{padding:14px 22px;border-radius:14px;border:0;background:linear-gradient(135deg,#4ade80,#16a34a);color:#05210f;font-weight:1000;letter-spacing:.7px;box-shadow:0 8px 22px #0005;cursor:pointer}
+@media(max-width:520px){.pk-confirm-actions{flex-direction:column}.pk-confirm-lose,.pk-confirm-continue{width:100%}}
+</style>
+<script>
+(()=>{
+  const modal=document.getElementById('pkTournamentConfirm');
+  const lose=document.getElementById('pkTournamentLose');
+  const cont=document.getElementById('pkTournamentContinue');
+  if(!modal||!lose||!cont)return;
+  const close=()=>{modal.hidden=true;};
+  // Capture phase on document so the PLAY handlers never reach the menu screens.
+  document.addEventListener('click',event=>{
+    const target=event.target;
+    if(!target||!target.closest||!target.closest('#pkPlay'))return;
+    if(!window.pkApexInProgress)return;
+    event.preventDefault();
+    event.stopPropagation();
+    modal.hidden=false;
+  },true);
+  cont.addEventListener('click',()=>{close();if(window.pkResumeApex)window.pkResumeApex();});
+  lose.addEventListener('click',()=>{
+    close();
+    if(window.pkResetApex)window.pkResetApex();
+    window.pkApexInProgress=false;
+    if(window.pkSyncResume)window.pkSyncResume();
+    if(window.pkOpenPlay)window.pkOpenPlay();
+  });
+  modal.addEventListener('click',event=>{if(event.target===modal)close();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!modal.hidden)close();});
+})();
 </script>
 
 
