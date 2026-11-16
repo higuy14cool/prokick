@@ -1174,12 +1174,15 @@ window.pkBridge={getP2:()=>players[p2ControlledIndex],moveP2:(dx,dy,sprint)=>{co
 /* ---------- Apex Cup: playable tournament matches ---------- */
 /* Tournament ties can be allowed (group stage) or forced into the shootout (knockouts). */
 let pkTournamentCtx={active:false};
+/* Set while a playable Apex Cup tie is running: concedes the tie on exit. */
+let pkTournamentForfeit=null;
 window.pkMatchContext=null;
 function pkTournamentTeam(key,cfg){
   teams[key]={name:cfg.name,color:cfg.color,dark:cfg.dark||cfg.color,crest:cfg.crest||cfg.short||'⚽',short:cfg.short||String(cfg.name).slice(0,3).toUpperCase()};
 }
 function pkTournamentEnd(){
   pkTournamentCtx.active=false;
+  pkTournamentForfeit=null;
   const koCd=document.getElementById('pkKoCountdown');if(koCd)koCd.remove();
   window.pkMatchContext=null;
   const back=document.getElementById('pkTournamentBack');if(back)back.remove();
@@ -1197,8 +1200,36 @@ function pkTournamentEnd(){
   home='chicken';away='dragon';updateTeams();
   document.getElementById('apexRoot').hidden=false;
 }
+function pkForfeitPrompt(){
+  const pause=document.getElementById('pauseBtn');
+  let wasPaused=false;
+  try{wasPaused=!running;running=false;if(pause)pause.textContent='\u25b6 Resume';}catch(e){}
+  const ask=window.pkAsk?window.pkAsk({
+    title:'Leave this match?',
+    text:'If you exit now you forfeit the tie. Your goals will not count, and the other team is awarded a 3\u20130 win \u2014 three points and three goals.',
+    yes:'EXIT & FORFEIT',
+    no:'STAY IN MATCH'
+  }):Promise.resolve(true);
+  return Promise.resolve(ask).then(ok=>{
+    if(!ok&&!wasPaused){try{running=true;if(pause)pause.textContent='\u2161 Pause';}catch(e){}}
+    return ok;
+  });
+}
+/* Leaving an Apex Cup tie from Exit game / End Game must be confirmed, and confirming concedes 0-3.
+   Bound on window so it wins the capture race against the earlier document-level Exit game handler. */
+window.addEventListener('click',ev=>{
+  if(!pkTournamentCtx.active)return;
+  const t=ev.target;
+  const btn=t&&t.closest?t.closest('#pkExitGame,#pkQuickEnd'):null;
+  if(!btn)return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  if(ev.stopImmediatePropagation)ev.stopImmediatePropagation();
+  pkForfeitPrompt().then(ok=>{if(ok&&pkTournamentForfeit)pkTournamentForfeit();});
+},true);
 window.pkEngine={
   isActive:()=>pkTournamentCtx.active,
+  forfeit(){if(pkTournamentForfeit)pkTournamentForfeit();},
   start(opts){
     return new Promise(resolve=>{
       if(pkTournamentCtx.active){resolve(null);return;}
@@ -1230,7 +1261,10 @@ window.pkEngine={
         pkTournamentEnd();
         resolve(result||null);
       }
-      backBtn.addEventListener('click',()=>finish(null));
+      pkTournamentForfeit=()=>finish({sa:goalsA,sb:goalsB,forfeit:true,penA:null,penB:null,winner:null});
+      backBtn.addEventListener('click',()=>{
+        pkForfeitPrompt().then(ok=>{if(ok&&!done)finish({sa:goalsA,sb:goalsB,forfeit:true,penA:null,penB:null,winner:null});});
+      });
       timer=setInterval(()=>{
         if(!pkTournamentCtx.active){clearInterval(timer);return;}
         if(pkPenaltyState&&pkPenaltyState.phase==='finished'){
@@ -2117,7 +2151,7 @@ const TEAMS=[
 const GROUPS=['A','B','C','D'];
 const $=id=>document.getElementById(id);
 const byId=id=>TEAMS.find(t=>t.id===id);
-const state={selected:null,group:null,groups:{},phase:'setup',rounds:[],roundIndex:0,champion:null,busy:false,out:false};
+const state={selected:null,group:null,groups:{},phase:'setup',rounds:[],roundIndex:0,champion:null,busy:false,out:false,disqualified:false};
 let gen=0,celebTimer=null,confettiRaf=null,lastSkip=0;
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -2177,7 +2211,7 @@ function startTournament(){
   const pool=shuffle(TEAMS.filter(t=>t.id!==me).map(t=>t.id));
   const groups={};groups[state.group]=[me,pool.shift(),pool.shift()];
   GROUPS.filter(g=>g!==state.group).forEach(g=>{groups[g]=[pool.shift(),pool.shift(),pool.shift()];});
-  state.groups={};state.rounds=[];state.roundIndex=0;state.champion=null;state.phase='group';state.out=false;
+  state.groups={};state.rounds=[];state.roundIndex=0;state.champion=null;state.phase='group';state.out=false;state.disqualified=false;
   GROUPS.forEach(g=>{
     const grp=makeGroup(g,groups[g],g===state.group?me:null);
     state.groups[g]=grp;
@@ -2247,7 +2281,7 @@ function koMatchCard(m,ri,mi){
   if(!m.played){
     foot='<div class="axp-matchfoot"><button type="button" class="axp-simbtn" data-kmatch="'+ri+':'+mi+'">'+(mine?'▶ PLAY MATCH':'SIMULATE')+'</button></div>';
   }else{
-    foot='<div class="axp-matchfoot"><span class="axp-hint">'+(m.penA!=null?'WON ON PENALTIES':'FULL TIME')+'</span></div>';
+    foot='<div class="axp-matchfoot"><span class="axp-hint">'+(m.dq?'DISQUALIFIED · FORFEIT 0–3':(m.penA!=null?'WON ON PENALTIES':'FULL TIME'))+'</span></div>';
   }
   return '<div class="axp-match'+(mine?' axp-mine':'')+(m.played?' axp-finished':'')+'">'+
     row(A,sc?sc.a:'',m.winner===m.a)+row(B,sc?sc.b:'',m.winner===m.b)+foot+'</div>';
@@ -2272,7 +2306,7 @@ function renderDone(){
   const champ=byId(state.champion);
   let html='<div class="axp-eyebrow">TOURNAMENT COMPLETE</div><h1 class="axp-title">'+champ.name+'</h1>'+
     '<p class="axp-sub">Champions of the Apex Cup.</p>'+
-    (state.out?'<p class="axp-note axp-elimnote">You were eliminated from this tournament — the remaining ties were simulated.</p>':'')+
+    (state.out?'<p class="axp-note axp-elimnote">'+(state.disqualified?'You forfeited a knockout tie and were disqualified — the remaining ties were simulated.':'You were eliminated from this tournament — the remaining ties were simulated.')+'</p>':'')+
     '<div class="axp-bracket">'+state.rounds.map((r,ri)=>
       '<div class="axp-round"><div class="axp-roundhead">'+r.name.toUpperCase()+'</div>'+r.matches.map((m,mi)=>koMatchCard(m,ri,mi)).join('')+'</div>'
     ).join('')+'</div>'+
@@ -2458,6 +2492,11 @@ async function playUserMatch(match,knockout,label){
     competition:'APEX CUP · '+label+(knockout?' · KNOCKOUT':' · GROUP STAGE')
   });
   if(!res)return null;
+  if(res.forfeit){
+    // Quitting mid-match concedes: player 0, opponent 3, and the player's goals are wiped.
+    // Knockout forfeits disqualify the manager outright; group forfeits are only a 0-3 loss.
+    return {forfeit:true, disqualified:!!knockout, sa:0, sb:3, penA:null, penB:null, winner:userIsHome?match.b:match.a};
+  }
   const sa=userIsHome?res.sa:res.sb;
   const sb=userIsHome?res.sb:res.sa;
   let penA=null,penB=null,winner=null;
@@ -2528,6 +2567,7 @@ async function playKo(ri,mi){
   }
   if(res){
     m.sa=res.sa;m.sb=res.sb;m.penA=res.penA;m.penB=res.penB;m.winner=res.winner;m.played=true;
+    if(res.disqualified){m.dq=true;state.disqualified=true;}
     if(res.winner&&res.winner!==state.selected)state.out=true;
     state.busy=false;
     autoFinishRound();
@@ -2638,7 +2678,7 @@ function resetApex(){
   window.pkApexInProgress=false;
   try{localStorage.removeItem('pkApexSave.v1');}catch(e){}
   if(window.pkSyncResume)window.pkSyncResume();
-  state.selected=null;state.group=null;state.groups={};state.phase='setup';state.out=false;
+  state.selected=null;state.group=null;state.groups={};state.phase='setup';state.out=false;state.disqualified=false;
   state.rounds=[];state.roundIndex=0;state.champion=null;state.busy=false;
   $('axpSetup').hidden=false;$('axpStage').hidden=true;
   $('axpCelebration').hidden=true;$('axpMatchModal').hidden=true;
@@ -2654,7 +2694,7 @@ function pkApexSave(){
   if(!PK_APP_MODE)return;
   try{
     if(state.phase==='group'||state.phase==='ko'){
-      localStorage.setItem(PK_SAVE_KEY,JSON.stringify({v:1,savedAt:Date.now(),selected:state.selected,group:state.group,groups:state.groups,phase:state.phase,rounds:state.rounds,roundIndex:state.roundIndex,champion:state.champion,out:!!state.out}));
+      localStorage.setItem(PK_SAVE_KEY,JSON.stringify({v:1,savedAt:Date.now(),selected:state.selected,group:state.group,groups:state.groups,phase:state.phase,rounds:state.rounds,roundIndex:state.roundIndex,champion:state.champion,out:!!state.out,disqualified:!!state.disqualified}));
     }else{
       localStorage.removeItem(PK_SAVE_KEY);
     }
@@ -2670,7 +2710,7 @@ function pkApexRestore(){
   if(!d.groups||!GROUPS.every(g=>d.groups[g]))return false;
   if(!Array.isArray(d.rounds))return false;
   state.selected=d.selected;state.group=d.group;state.groups=d.groups;state.phase=d.phase;
-  state.rounds=d.rounds;state.roundIndex=d.roundIndex||0;state.champion=d.champion||null;state.busy=false;state.out=!!d.out;
+  state.rounds=d.rounds;state.roundIndex=d.roundIndex||0;state.champion=d.champion||null;state.busy=false;state.out=!!d.out;state.disqualified=!!d.disqualified;
   window.pkApexInProgress=true;
   if(window.pkSyncResume)window.pkSyncResume();
   return true;
