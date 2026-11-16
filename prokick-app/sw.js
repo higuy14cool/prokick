@@ -1,5 +1,5 @@
 // ProKick offline cache. Bump CACHE when index.html changes.
-const CACHE = 'prokick-v37';
+const CACHE = 'prokick-v38';
 const ASSETS = [
   './',
   './index.html',
@@ -33,15 +33,19 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET' || new URL(request.url).origin !== self.location.origin) return;
 
+  // Navigations: never show a hosting/proxy error page in place of the game.
+  // A cached copy wins over any failed or non-OK response, so the app still
+  // opens when the host is unreachable or answers 404/5xx.
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then(response => {
+          if (!response.ok) return caches.match('./index.html').then(hit => hit || response);
           const copy = response.clone();
           caches.open(CACHE).then(cache => cache.put('./index.html', copy)).catch(() => {});
           return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match('./index.html').then(hit => hit || Response.error()))
     );
     return;
   }
