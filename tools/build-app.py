@@ -6,6 +6,7 @@ Run after editing "ProKick_League_Selection_Updated (1).html":
 """
 import io
 import pathlib
+import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -22,6 +23,9 @@ HEAD_ADD = """<meta name="description" content="ProKick - free browser football 
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+.pk-ball img.pk-applogo{width:clamp(84px,13vw,116px);height:auto;display:block;border-radius:24%;box-shadow:0 10px 26px #0006}
+</style>
 """
 
 SW_REGISTER = """<script>
@@ -84,6 +88,8 @@ REPLACEMENTS = [
 
 def main() -> int:
     html = SRC.read_text(encoding="utf-8")
+    # The master embeds the logo inline; the app build serves it from icons/.
+    html = re.sub(r'(class="pk-applogo" src=")data:image/png;base64,[^"]*"', r'\1icons/icon-192.png"', html)
     for old, new in REPLACEMENTS:
         if old not in html:
             print(f"build-app: pattern not found: {old[:60]}", file=sys.stderr)
