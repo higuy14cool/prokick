@@ -6,6 +6,7 @@ Run after editing "ProKick_League_Selection_Updated (1).html":
 """
 import io
 import pathlib
+import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -82,15 +83,13 @@ REPLACEMENTS = [
         "audio/crowd-cheer.mp3",
     ),
     ('<title>ProKick</title>', '<title>ProKick</title>\n' + HEAD_ADD),
-    (
-        '<div class="pk-ball">⚽</div>',
-        '<div class="pk-ball"><img class="pk-applogo" src="icons/icon-192.png" alt="ProKick logo" width="116" height="116"></div>',
-    ),
 ]
 
 
 def main() -> int:
     html = SRC.read_text(encoding="utf-8")
+    # The master embeds the logo inline; the app build serves it from icons/.
+    html = re.sub(r'(class="pk-applogo" src=")data:image/png;base64,[^"]*"', r'\1icons/icon-192.png"', html)
     for old, new in REPLACEMENTS:
         if old not in html:
             print(f"build-app: pattern not found: {old[:60]}", file=sys.stderr)
