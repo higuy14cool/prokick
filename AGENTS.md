@@ -12,3 +12,12 @@
 4. Verify: `node --check` on the extracted inline scripts, then load `http://localhost:8142/` and play a match.
 
 Preview: `cd prokick-app && python3 -m http.server 8142`.
+
+## Offline single-file build
+
+`python3 tools/build-offline.py` writes `prokick-offline.html`: the master HTML with
+three.min.js inlined (from `prokick-app/vendor/`) and the crowd-cheer mp3 embedded as a
+data URI (`window.PK_CHEER_SRC`, also used for the goal-replay track). It needs no network
+at all, which matters when the game is opened from a device's file browser instead of a
+web server. `ProKick-Offline.zip` is just that one file, for AirDrop/iCloud transfer.
+Note: iOS Files previews HTML without running JavaScript, so that path still cannot play.

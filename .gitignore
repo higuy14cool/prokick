@@ -1,1 +1,4 @@
 *.zip
+
+# Generated single-file offline build (rebuild with python3 tools/build-offline.py)
+prokick-offline.html
