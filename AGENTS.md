@@ -21,3 +21,21 @@ data URI (`window.PK_CHEER_SRC`, also used for the goal-replay track). It needs 
 at all, which matters when the game is opened from a device's file browser instead of a
 web server. `ProKick-Offline.zip` is just that one file, for AirDrop/iCloud transfer.
 Note: iOS Files previews HTML without running JavaScript, so that path still cannot play.
+
+## Offline single-file build (preferred delivery)
+The user plays on an Apple tablet from the Files app, not from a hosted URL: the
+workspace preview host (daytonaproxy01.eu) puts its own sign-in in front of the
+page once the workspace sleeps, then lands on /callback with `404 sandbox not
+found`. That is a host login, never the game — never present a preview URL as
+"the app" again.
+
+Build and package a login-free copy after every change to the master file:
+    python3 tools/build-offline.py          # -> prokick-offline.html (self-contained)
+    python3 - <<'PY'
+    import zipfile, pathlib
+    with zipfile.ZipFile('ProKick-Offline.zip','w',zipfile.ZIP_DEFLATED) as z:
+        z.write('prokick-offline.html','ProKick.html')
+    PY
+
+`prokick-offline.html` must make zero network requests (three.js and the crowd
+cheer are inlined); verify with a headless run before handing it over.
