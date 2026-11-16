@@ -1512,6 +1512,11 @@ window.pkEngine={
 <script>
 (()=>{const start=document.getElementById('pkStart');if(start)start.textContent='Start game';const setup=document.getElementById('pkSetup');if(setup){const heading=setup.querySelector('h1');if(heading)heading.textContent='Match setup';}})();
 </script>
+<script>(()=>{const start=document.getElementById('pkStart'),setup=document.getElementById('pkSetup');if(!start||!setup)return;
+ function apply(){const t=document.body.dataset.gameType||'';const solo=(t==='classic'||t==='futsal');
+  start.style.display=solo&&!setup.hidden?'none':'';}
+ ['pkContinue','pkBack','pkPlay','pkSetupStartMatch'].forEach(id=>{const b=document.getElementById(id);if(b)b.addEventListener('click',()=>setTimeout(apply,0));});
+ new MutationObserver(apply).observe(setup,{attributes:true,attributeFilter:['hidden']});apply();})();</script>
 <script>
 (()=>{
   const play=document.getElementById('pkPlay');
