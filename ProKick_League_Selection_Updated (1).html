@@ -336,7 +336,7 @@ function pkAwardKick(fouledTeam,x,y){
  document.getElementById('possession').textContent=pen?'PENALTY':'FREE KICK';
  showToast(pen?'PENALTY!':'FOUL!');
  if(taker){
-  if(pen)pkInMatchPenBegin(fouledTeam,taker,spot.x,spot.y,!pkSetPieceHuman(fouledTeam));
+  if(pen)pkInMatchPenBegin(fouledTeam,taker,spot.x,spot.y,!pkSetPieceHuman(fouledTeam),'Foul by '+teams[foulingTeam===0?home:away].name+' inside the box.');
   else if(pkSetPieceHuman(fouledTeam))pkFreeKickBegin(fouledTeam,taker);
   else pkOppFreeKickBegin(fouledTeam,taker);
  }
@@ -479,7 +479,34 @@ const pkImOverlay=document.createElement('section');
 pkImOverlay.id='pkInMatchPen';pkImOverlay.hidden=true;
 pkImOverlay.innerHTML='<div class="pk-im-sky"></div><div class="pk-im-stands"></div><div class="pk-im-grass"></div><div class="pk-im-goal"><div class="pk-im-net"></div><div class="pk-im-keeper"></div><div class="pk-im-hitpad" id="pkImHitpad"></div><div class="pk-im-aim" id="pkImAim"></div></div><div class="pk-im-ball"><i></i></div><div class="pk-im-callout" id="pkImCallout"></div><div class="pk-im-head">PENALTY<b id="pkImTeam"></b></div><div class="pk-im-hint" id="pkImHint">TAP ANYWHERE TO SHOOT THERE</div>';
 document.body.appendChild(pkImOverlay);
-function pkInMatchPenBegin(team,taker,spotX,spotY,dive){
+/* Every in-match penalty first shows a "who / why / are you ready?" box. */
+const pkPenReadyStyle=document.createElement('style');
+pkPenReadyStyle.textContent='#pkPenReady{position:fixed;inset:0;z-index:1600;display:flex;align-items:center;justify-content:center;padding:18px;background:radial-gradient(ellipse at 50% 18%,#1b4a31,#050f0a 76%);color:#f0fdf4}#pkPenReady[hidden]{display:none}.pk-penready-card{width:min(540px,100%);max-height:94vh;overflow:auto;padding:clamp(18px,4vw,30px);border:1px solid #517a5b;border-radius:22px;background:linear-gradient(145deg,#10251a,#08150e);box-shadow:0 24px 90px #000b;text-align:center}.pk-penready-kicker{color:#9bd4a8;font-size:11px;font-weight:950;letter-spacing:3px}.pk-penready-card h2{margin:10px 0 8px;font-size:clamp(22px,4.6vw,34px);color:#d9ff54;line-height:1.15}.pk-penready-why{margin:0 0 6px;font-size:clamp(13px,2.6vw,17px);font-weight:900}.pk-penready-role{margin:0 0 16px;color:#a7c9b0;font-size:clamp(10px,2.2vw,12px);font-weight:800;letter-spacing:1px}.pk-penready-ask{margin:0 0 14px;font-size:clamp(15px,3vw,20px);font-weight:1000;letter-spacing:2px;color:#eaf7ef}.pk-penready-btn{min-width:min(300px,100%);padding:15px 24px;background:linear-gradient(135deg,#d9ff54,#7fc42c);color:#12200a;border:0;border-radius:14px;font-size:15px;font-weight:1000;letter-spacing:1px;cursor:pointer}';
+document.head.appendChild(pkPenReadyStyle);
+const pkPenReadyOverlay=document.createElement('section');
+pkPenReadyOverlay.id='pkPenReady';pkPenReadyOverlay.hidden=true;
+pkPenReadyOverlay.innerHTML='<div class="pk-penready-card"><div class="pk-penready-kicker">PROKICK · PENALTY</div><h2 id="pkPenReadyWho">PENALTY</h2><p class="pk-penready-why" id="pkPenReadyWhy">Foul inside the box.</p><p class="pk-penready-role" id="pkPenReadyRole"></p><p class="pk-penready-ask">ARE YOU READY?</p><button class="pk-penready-btn" type="button" id="pkPenReadyBtn">I&rsquo;M READY ▶</button></div>';
+document.body.appendChild(pkPenReadyOverlay);
+let pkPenReadyPending=null;
+function pkPenReadyGo(){
+ const pending=pkPenReadyPending;if(!pending)return;
+ pkPenReadyPending=null;pkPenReadyOverlay.hidden=true;
+ pkInMatchPenSetup(pending.team,pending.taker,pending.spotX,pending.spotY,pending.isDive);
+}
+document.getElementById('pkPenReadyBtn').addEventListener('click',pkPenReadyGo);
+function pkPenClearGate(){pkPenReadyPending=null;pkPenReadyOverlay.hidden=true;if(pkSetPiece&&pkSetPiece.kind==='pen'&&pkSetPiece.phase==='ready')pkSetPiece=null;}
+/* Hold the match on the ready box; the penalty itself starts when Ready is pressed. */
+function pkInMatchPenBegin(team,taker,spotX,spotY,dive,reason){
+ const isDive=!!dive;
+ pkSetPiece={kind:'pen',team,taker,phase:'ready',mode:isDive?'dive':'shoot',spot:{x:spotX,y:spotY}};
+ pkPenReadyPending={team,taker,spotX,spotY,isDive};
+ pkImOverlay.hidden=true;
+ document.getElementById('pkPenReadyWho').textContent='PENALTY TO '+(team===0?teams[home].name:teams[away].name).toUpperCase();
+ document.getElementById('pkPenReadyWhy').textContent=reason||'Foul inside the box.';
+ document.getElementById('pkPenReadyRole').textContent=isDive?'YOU ARE THE KEEPER — GET READY TO DIVE':'YOU TAKE THE KICK — GET READY TO SHOOT';
+ pkPenReadyOverlay.hidden=false;
+}
+function pkInMatchPenSetup(team,taker,spotX,spotY,dive){
  const isDive=!!dive;
  pkSetPiece={kind:'pen',team,taker,phase:'aim',mode:isDive?'dive':'shoot',spot:{x:spotX,y:spotY}};
  pkImOverlay.hidden=false;
@@ -620,10 +647,13 @@ pkImOverlay.addEventListener('pointermove',e=>{
  pkInMatchPenAimPreview(e.clientX,e.clientY);
 });
 window.pkSetPieceState=()=>pkSetPiece;
+window.pkPenReadyGo=pkPenReadyGo;
+window.pkInMatchPenBegin=pkInMatchPenBegin;
+window.pkPenClearGate=pkPenClearGate;
 window.pkAwardKick=pkAwardKick;
 function update(dt){
  const realDt=dt;
- if(pkSetPiece&&pkSetPiece.phase==='aim'&&pkSetPiece.hold!==false)dt=0;
+ if(pkSetPiece&&(pkSetPiece.phase==='aim'||pkSetPiece.phase==='ready')&&pkSetPiece.hold!==false)dt=0;
  if(running&&!matchEnded&&!futsalMode&&pkClockAdvance(realDt))return;
  if(goalSequence){
   goalSequence.elapsed+=dt;
@@ -1035,7 +1065,7 @@ function pkCelebrationCapture(dt){
   const countdown=document.getElementById('pkCountdown');if(countdown)countdown.hidden=true;
   if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});
  }
- window.pkReturnHome=returnHome;
+ {const pkOrigReturnHome=returnHome;window.pkReturnHome=function(){pkPenClearGate();return pkOrigReturnHome.apply(this,arguments);};}
  window.pkMatchIsRunning=()=>!!running;
  window.pkPauseMatch=()=>{if(matchEnded||goalSequence||pkSetPiece)return false;running=false;return true;};
  window.pkResumeMatch=()=>{if(matchEnded)return false;running=true;started=true;return true;};
