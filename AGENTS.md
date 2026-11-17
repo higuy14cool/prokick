@@ -39,3 +39,9 @@ Build and package a login-free copy after every change to the master file:
 
 `prokick-offline.html` must make zero network requests (three.js and the crowd
 cheer are inlined); verify with a headless run before handing it over.
+
+## Live site
+Published at https://higuy14cool.github.io/prokick/ (repo `higuy14cool/prokick`,
+public, Pages source = `master` / `/docs`). To ship a change: edit the master
+file, run `python3 tools/build-app.py`, then `cp -r prokick-app/. docs/` and
+commit + push `docs/` (Pages rebuilds in about 30-60 s).
