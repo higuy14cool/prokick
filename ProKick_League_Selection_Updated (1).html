@@ -127,6 +127,7 @@
     <button class="pk-mode" id="pkBazelLeague"><span>⭐</span><b>Bazel League</b><small>Classic Match, Futsal, or Penalties</small></button>
     <button class="pk-mode" id="pkTwoVTwoLeague" type="button"><span>👥</span><b>2v2 Super League</b><small>Two players a side · FC Chicken Wings vs Cookers FC</small></button>
     <button class="pk-mode" id="pkApexCup" type="button"><span>🏆</span><b>The Apex Cup Tournament</b><small>12 teams · Group stage → Knockouts → Final</small></button>
+    <button class="pk-mode pk-coming-soon" id="pkOtherLeague" type="button" aria-disabled="true"><span>🌐</span><b>Other</b><small>Coming soon</small></button>
   </div>
 </section>
 <section id="pkGameTypes" class="pk-screen" hidden><button id="pkGameTypesBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">CHOOSE YOUR GAME</div><h1>Pick a game mode</h1><p>Choose how you want to play ProKick.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkClassicMatch"><span>🏟️</span><b>Classic Match</b><small>Play a full soccer match</small></button><button class="pk-mode" id="pkFutsal"><span>⚡</span><b>Futsal</b><small>Fast indoor soccer</small></button><button class="pk-mode" id="pkPenalties"><span>🥅</span><b>Penalties</b><small>Test your penalty skills</small></button></div></section>
@@ -2127,7 +2128,7 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
 })();
 </script>
 <style>
-#pkLeagueSelect .pk-league-cards{grid-template-columns:repeat(3,minmax(0,1fr));width:min(1180px,100%)}
+#pkLeagueSelect .pk-league-cards{grid-template-columns:repeat(4,minmax(0,1fr));width:min(1180px,100%)}
 #pkLeagueSelect .pk-mode{min-height:210px}
 #pkLeagueSelect .pk-mode span{font-size:48px}
 #pkLeagueSelect .pk-coming-soon{opacity:.78;cursor:default;position:relative}
