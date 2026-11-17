@@ -3132,6 +3132,49 @@ window.addEventListener('DOMContentLoaded',()=>{
   window.pkSyncResume();
 });
 </script>
+<style>
+#pkUpdateChip{position:fixed;left:14px;bottom:14px;z-index:4200;display:none;align-items:center;gap:8px;background:#0f2b1c;color:#eafff1;border:1px solid #22c55e;border-radius:999px;padding:11px 16px;font:900 12px/1.1 var(--site-font-body,system-ui);letter-spacing:.6px;cursor:pointer;box-shadow:0 10px 26px #0007}
+#pkUpdateChip[data-show="1"]{display:inline-flex}
+</style>
+<script>
+/* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
+(function(){
+  const BUILD='44';
+  let chip=null;
+  function el(){
+    if(chip)return chip;
+    chip=document.createElement('button');
+    chip.id='pkUpdateChip';chip.type='button';
+    chip.textContent='⟳ UPDATE READY · TAP TO RELOAD';
+    chip.addEventListener('click',async()=>{
+      try{
+        const regs=await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r=>r.unregister()));
+        const keys=await caches.keys();
+        await Promise.all(keys.map(k=>caches.delete(k)));
+      }catch(e){}
+      location.reload();
+    });
+    document.body.appendChild(chip);
+    return chip;
+  }
+  async function check(){
+    if(!navigator.onLine)return;
+    try{
+      const r=await fetch('./sw.js',{cache:'no-store'});
+      if(!r.ok)return;
+      const m=/CACHE\s*=\s*['"]prokick-v(\d+)['"]/.exec(await r.text());
+      if(!m||m[1]===BUILD)return;
+      el().dataset.show='1';
+    }catch(e){}
+  }
+  if('serviceWorker' in navigator){
+    addEventListener('load',check);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)check();});
+    setInterval(check,120000);
+  }
+})();
+</script>
 
 
 

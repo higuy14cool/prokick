@@ -1,5 +1,5 @@
 // ProKick offline cache. Bump CACHE when index.html changes.
-const CACHE = 'prokick-v43';
+const CACHE = 'prokick-v44';
 const ASSETS = [
   './',
   './index.html',
@@ -38,7 +38,7 @@ self.addEventListener('fetch', event => {
   // opens when the host is unreachable or answers 404/5xx.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-store' })
         .then(response => {
           if (!response.ok) return caches.match('./index.html').then(hit => hit || response);
           const copy = response.clone();
