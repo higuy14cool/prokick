@@ -1389,6 +1389,13 @@ window.pkEngine={
  #pkPauseBox button{border:0;border-radius:12px;padding:15px 18px;font-size:15px;font-weight:1000;letter-spacing:1px;cursor:pointer}
  #pkPauseBox .pk-pbox-primary{background:linear-gradient(135deg,#4ade80,#16a34a);color:#05210f}
  #pkPauseBox .pk-pbox-secondary{background:#22352a;color:#cfe8d8;border:1px solid #3f6b52}
+ /* Inside the pitch: the card sits over the field only, leaving the rest of the UI sharp. */
+ #pkPauseBox.pk-pbox-infield{position:absolute;inset:0;z-index:120;border-radius:12px;padding:8px;background:#02100bc2;backdrop-filter:blur(3px);overflow:auto}
+ #pkPauseBox.pk-pbox-infield .pk-pbox-card{width:min(330px,92%);padding:15px 16px;border-radius:14px}
+ #pkPauseBox.pk-pbox-infield h2{margin:6px 0 4px;font-size:clamp(22px,3.6vw,32px)}
+ #pkPauseBox.pk-pbox-infield p{margin:0 0 12px;font-size:12.5px;line-height:1.4}
+ #pkPauseBox.pk-pbox-infield button{padding:11px 14px;font-size:13px}
+ #pkPauseBox.pk-pbox-infield .pk-pbox-eyebrow{font-size:10px;letter-spacing:2.4px}
  `;
  document.head.appendChild(style);
  const box=document.createElement('div');
@@ -1400,13 +1407,20 @@ window.pkEngine={
   +'<div class="pk-pbox-actions"><button type="button" class="pk-pbox-primary" id="pkPauseResume">\u25b6 RESUME</button>'
   +'<button type="button" class="pk-pbox-secondary" id="pkPauseLeave">LEAVE GAME</button></div></div>';
  document.body.appendChild(box);
+ /* Keep the card over the pitch itself, not over the whole window. */
+ function placeBox(){
+  const wrap=document.querySelector('.field-wrap');
+  if(wrap){if(box.parentNode!==wrap)wrap.appendChild(box);box.classList.add('pk-pbox-infield');}
+  else box.classList.remove('pk-pbox-infield');
+ }
+ placeBox();
  const title=box.querySelector('#pkPauseTitle'),text=box.querySelector('#pkPauseText'),
        resumeBtn=box.querySelector('#pkPauseResume'),leaveBtn=box.querySelector('#pkPauseLeave'),
        pauseBtn=document.getElementById('pauseBtn'),quickPause=document.getElementById('pkQuickPause');
  let mode=null,halfLabel='';
  function labels(on){const t=on?'\u2161 Pause':'\u25b6 Resume';if(pauseBtn)pauseBtn.textContent=t;if(quickPause)quickPause.textContent=t;}
  function show(kind){
-  mode=kind;
+  mode=kind;placeBox();
   if(kind==='half'){
    title.textContent='HALF TIME';
    text.textContent=(halfLabel?halfLabel.replace(/^HALF TIME · /,'')+' — ':'')+'The match is paused. Press resume to kick off the next half.';
