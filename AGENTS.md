@@ -40,6 +40,15 @@ Build and package a login-free copy after every change to the master file:
 `prokick-offline.html` must make zero network requests (three.js and the crowd
 cheer are inlined); verify with a headless run before handing it over.
 
+## Tournament matches are Classic Matches
+Tournament ties pass `{tournament:true}` into `pkEngine.start`, but that flag must
+never change gameplay: no aim error, keeper, or AI handicaps tied to
+`window.pkTournamentMatch` (the flag now only marks a tournament tie for
+forfeit/exit rules). Tournaments have no difficulty prompt, so `pkEngine.start`
+forces `window.pkDifficulty='easy'`; Classic Match picks its level in the modal.
+Group ties get `allowDraw:true` (a draw stands, 1 pt each); knockout ties get
+`allowDraw:false` (extra time, then penalties).
+
 ## Live site
 Published at https://higuy14cool.github.io/prokick/ (repo `higuy14cool/prokick`,
 public, Pages source = `master` / `/docs`). To ship a change: edit the master
