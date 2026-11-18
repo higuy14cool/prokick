@@ -1,5 +1,5 @@
 // ProKick offline cache. Bump CACHE when index.html changes.
-const CACHE = 'prokick-v61';
+const CACHE = 'prokick-v62';
 const ASSETS = [
   './',
   './index.html',
@@ -10,7 +10,10 @@ const ASSETS = [
   './icons/favicon-32.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  './icons/apple-touch-icon-152.png',
+  './icons/apple-touch-icon-167.png',
+  './icons/icon-1024.png'
 ];
 
 self.addEventListener('install', event => {

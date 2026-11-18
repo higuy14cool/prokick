@@ -22,7 +22,10 @@ HEAD_ADD = """<meta name="description" content="ProKick - free browser football 
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="mask-icon" href="icons/icon-192.png" color="#22c55e">
 <style>
 .pk-ball img.pk-applogo{width:clamp(84px,13vw,116px);height:auto;display:block;border-radius:24%;box-shadow:0 10px 26px #0006}
 </style>
