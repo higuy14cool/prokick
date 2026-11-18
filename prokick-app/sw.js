@@ -1,5 +1,5 @@
 // ProKick offline cache. Bump CACHE when index.html changes.
-const CACHE = 'prokick-v60';
+const CACHE = 'prokick-v61';
 const ASSETS = [
   './',
   './index.html',

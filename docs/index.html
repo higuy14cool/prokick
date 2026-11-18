@@ -1328,7 +1328,12 @@ window.pkEngine={
   forfeit(){if(pkTournamentForfeit)pkTournamentForfeit();},
   start(opts){
     return new Promise(resolve=>{
-      if(pkTournamentCtx.active){resolve(null);return;}
+      /* Only a tie that is still on the pitch may block the next one. A lock left behind by an
+         interrupted match would otherwise make every PLAY press do nothing until a reload. */
+      if(pkTournamentCtx.active){
+        if(document.body.classList.contains('pk-match')){resolve(null);return;}
+        pkTournamentCtx.active=false;
+      }
       pkTournamentCtx.active=true;
       pkTournamentTeam('tourHome',opts.home);
       pkTournamentTeam('tourAway',opts.away);
@@ -3714,7 +3719,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='60';
+  const BUILD='61';
   let chip=null;
   function el(){
     if(chip)return chip;
