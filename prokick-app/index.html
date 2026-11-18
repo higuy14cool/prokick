@@ -1270,6 +1270,8 @@ window.pkBridge={getP2:()=>players[p2ControlledIndex],moveP2:(dx,dy,sprint)=>{co
 /* ---------- Apex Cup: playable tournament matches ---------- */
 /* Tournament ties can be allowed (group stage) or forced into the shootout (knockouts). */
 let pkTournamentCtx={active:false,root:''};
+/* Closes the tie that is currently on the pitch, if any, so PLAY can always open the next one. */
+let pkTournamentFinish=null;
 /* Set while a playable Apex Cup tie is running: concedes the tie on exit. */
 let pkTournamentForfeit=null;
 window.pkMatchContext=null;
@@ -1331,11 +1333,13 @@ window.pkEngine={
   forfeit(){if(pkTournamentForfeit)pkTournamentForfeit();},
   start(opts){
     return new Promise(resolve=>{
-      /* Only a tie that is still on the pitch may block the next one. A lock left behind by an
-         interrupted match would otherwise make every PLAY press do nothing until a reload. */
-      if(pkTournamentCtx.active){
-        if(document.body.classList.contains('pk-match')){resolve(null);return;}
-        pkTournamentCtx.active=false;
+      /* PLAY must always open a tie. If one is still marked live, close it first (its result is
+         discarded) instead of silently swallowing the press and leaving the tournament stuck. */
+      if(pkTournamentCtx.active||pkTournamentFinish){
+        const stale=pkTournamentFinish;
+        pkTournamentFinish=null;
+        if(stale){stale(null);}
+        else{pkTournamentCtx.active=false;document.body.classList.remove('pk-match');}
       }
       pkTournamentCtx.active=true;
       pkTournamentTeam('tourHome',opts.home);
@@ -1365,9 +1369,11 @@ window.pkEngine={
       let done=false,timer=null;
       function finish(result){
         if(done)return;done=true;clearInterval(timer);
+        if(pkTournamentFinish===finish)pkTournamentFinish=null;
         pkTournamentEnd();
         resolve(result||null);
       }
+      pkTournamentFinish=finish;
       pkTournamentForfeit=()=>finish({sa:goalsA,sb:goalsB,forfeit:true,penA:null,penB:null,winner:null});
       backBtn.addEventListener('click',()=>{
         pkForfeitPrompt().then(ok=>{if(ok&&!done)finish({sa:goalsA,sb:goalsB,forfeit:true,penA:null,penB:null,winner:null});});
@@ -3722,7 +3728,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='62';
+  const BUILD='63';
   let chip=null;
   function el(){
     if(chip)return chip;
