@@ -1266,7 +1266,7 @@ window.pkBridge={getP2:()=>players[p2ControlledIndex],moveP2:(dx,dy,sprint)=>{co
 
 /* ---------- Apex Cup: playable tournament matches ---------- */
 /* Tournament ties can be allowed (group stage) or forced into the shootout (knockouts). */
-let pkTournamentCtx={active:false};
+let pkTournamentCtx={active:false,root:''};
 /* Set while a playable Apex Cup tie is running: concedes the tie on exit. */
 let pkTournamentForfeit=null;
 window.pkMatchContext=null;
@@ -1291,7 +1291,10 @@ function pkTournamentEnd(){
   const victory=document.getElementById('pkPenaltyVictory');if(victory)victory.classList.remove('show');
   reset();
   home='chicken';away='dragon';updateTeams();
-  document.getElementById('apexRoot').hidden=false;
+  /* Reveal the tournament page the tie was launched from (Apex or Bazel), not a fixed one. */
+  const root=document.getElementById(pkTournamentCtx.root);
+  if(root)root.hidden=false;
+  pkTournamentCtx.root='';
 }
 function pkForfeitPrompt(){
   const pause=document.getElementById('pauseBtn');
@@ -1337,7 +1340,8 @@ window.pkEngine={
       document.body.classList.add('pk-match');
       document.querySelectorAll('.pk-screen').forEach(s=>{s.hidden=true;});
       const cd=document.getElementById('pkCountdown');if(cd)cd.hidden=true;
-      document.getElementById('apexRoot').hidden=true;
+      /* The Apex and Bazel pages are opaque full-screen overlays: hide whichever one launched this tie. */
+      ['apexRoot','bzlRoot'].forEach(id=>{const root=document.getElementById(id);if(!root)return;if(!root.hidden)pkTournamentCtx.root=id;root.hidden=true;});
       const comp=document.querySelector('.matchhead .competition');if(comp)comp.textContent=opts.competition||'APEX CUP';
       const title=document.querySelector('.matchhead .matchtitle');if(title)title.textContent=opts.home.name+' vs '+opts.away.name;
       const quickEnd=document.getElementById('pkQuickEnd');if(quickEnd)quickEnd.style.display='none';
@@ -3710,7 +3714,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='59';
+  const BUILD='60';
   let chip=null;
   function el(){
     if(chip)return chip;

@@ -49,6 +49,11 @@ forces `window.pkDifficulty='easy'`; Classic Match picks its level in the modal.
 Group ties get `allowDraw:true` (a draw stands, 1 pt each); knockout ties get
 `allowDraw:false` (extra time, then penalties).
 
+`#apexRoot` and `#bzlRoot` are opaque `position:fixed` pages at z-index 3000, so
+`pkEngine.start` must hide whichever one launched the tie and `pkTournamentEnd`
+must reveal that same one (stored in `pkTournamentCtx.root`). Forgetting this
+made a tournament tie run invisibly behind the tournament page.
+
 ## Live site
 Published at https://higuy14cool.github.io/prokick/ (repo `higuy14cool/prokick`,
 public, Pages source = `master` / `/docs`). To ship a change: edit the master
