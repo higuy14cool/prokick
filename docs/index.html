@@ -134,7 +134,7 @@
 
 
 <div class="app" id="app">
-<section id="pkHome" class="pk-screen"><div class="pk-ball"><img class="pk-applogo" src="icons/icon-192.png" alt="ProKick logo" width="116" height="116"></div><div class="pk-eyebrow">THE COMPETITIVE FOOTBALL GAME</div><h1>ProKick</h1><p>Build your team. Own the pitch.</p><button id="pkPlay" class="pk-bigbtn">PLAY <span>▶</span></button><button id="pkResumeTournament" class="pk-resumebtn" type="button" hidden>🏆 RESUME TOURNAMENT</button><button id="pkCancelTournament" class="pk-cancelbtn" type="button" hidden>✕ CANCEL TOURNAMENT</button><div class="pk-copyright">© 2026 POWERPLAY Studios</div></section>
+<section id="pkHome" class="pk-screen"><div class="pk-ball"><img class="pk-applogo" src="icons/icon-192.png" srcset="icons/icon-192.png 1x, icons/icon-256.png 2x" alt="ProKick logo" width="116" height="116"></div><div class="pk-eyebrow">THE COMPETITIVE FOOTBALL GAME</div><h1>ProKick</h1><p>Build your team. Own the pitch.</p><button id="pkPlay" class="pk-bigbtn">PLAY <span>▶</span></button><button id="pkResumeTournament" class="pk-resumebtn" type="button" hidden>🏆 RESUME TOURNAMENT</button><button id="pkCancelTournament" class="pk-cancelbtn" type="button" hidden>✕ CANCEL TOURNAMENT</button><div class="pk-copyright">© 2026 POWERPLAY Studios</div></section>
 <section id="pkLeagueSelect" class="pk-screen" hidden>
   <button id="pkLeagueBack" class="pk-back pk-corner-back">← Go Back</button>
   <div class="pk-eyebrow">CHOOSE YOUR COMPETITION</div>
@@ -3728,7 +3728,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='63';
+  const BUILD='64';
   let chip=null;
   function el(){
     if(chip)return chip;
