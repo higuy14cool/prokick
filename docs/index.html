@@ -149,7 +149,7 @@
 </section>
 <section id="pkGameTypes" class="pk-screen" hidden><button id="pkGameTypesBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">CHOOSE YOUR GAME</div><h1>Pick a game mode</h1><p>Choose how you want to play ProKick.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkClassicMatch"><span>🏟️</span><b>Classic Match</b><small>Play a full soccer match</small></button><button class="pk-mode" id="pkFutsal"><span>⚡</span><b>Futsal</b><small>Fast indoor soccer</small></button><button class="pk-mode" id="pkPenalties"><span>🥅</span><b>Penalties</b><small>Test your penalty skills</small></button></div></section>
 <section id="pkModes" class="pk-screen" hidden><button id="pkModesBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">CHOOSE YOUR MATCH</div><h1>How do you want to play?</h1><div class="pk-modecards"><button class="pk-mode selected" data-mode="1"><span>🧤</span><b>1 Player</b><small>Play against the computer</small></button><button class="pk-mode" data-mode="2"><span>🎮</span><b>2 Players</b><small>Play with a friend</small></button></div><button id="pkContinue" class="pk-bigbtn">CONTINUE →</button></section>
- <section id="pkOtherOptions" class="pk-screen" hidden><button id="pkOtherBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">OTHER</div><h1>Choose your match</h1><p>Friendly matches with any club in the game.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkFriendlyMatch" type="button"><span>🤝</span><b>Friendly Match</b><small>Classic Match, Futsal, or Penalties · every club except Cookers FC</small></button></div></section>
+<section id="pkOtherOptions" class="pk-screen" hidden><button id="pkOtherBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">OTHER</div><h1>Choose your match</h1><p>Friendly matches with any club, or a two-a-side tournament.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkFriendlyMatch" type="button"><span>🤝</span><b>Friendly Match</b><small>Classic Match, Futsal, or Penalties · every club except Cookers FC</small></button><button class="pk-mode" id="pkTwosTournament" type="button"><span>👥</span><b>2s Tournament</b><small>Elks, FC Chicken Wings and Argens · every tie 2v2 · drawn final goes to penalties</small></button></div></section>
 <section id="pkBazelOptions" class="pk-screen" hidden><button id="pkBazelBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">BAZEL LEAGUE</div><h1>Choose your competition</h1><p>Bazel League teams: FC Chicken Wings, Dragonwolves FC, Bears FC.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkSeasonMatch" type="button"><span>📅</span><b>Season Match</b><small>Classic Match, Futsal, or Penalties</small></button><button class="pk-mode" id="pkBazelTournament" type="button"><span>🏆</span><b>Bazel Tournament</b><small>Group stage, then the final</small></button></div></section>
 <section id="pkSetup" class="pk-screen" hidden><button id="pkBack" class="pk-back pk-corner-back">← Go Back</button><button id="pkSetupStartMatch" class="pk-mode-start">▶ START MATCH</button><div class="pk-eyebrow">MATCH DAY</div><h1>Set up your match</h1><p>Pick your teams, then kick off.</p><div id="pkSetupPanel"></div><button id="pkStart" class="pk-bigbtn">START GAME ⚽</button></section>
 <section id="pkCountdown" class="pk-countdown" hidden><div class="pk-eyebrow">GET READY</div><div id="pkCountNum">3</div><p>Kick-off is coming...</p></section>
@@ -921,6 +921,7 @@ function pkPenaltyKick(){
  pkPenaltyUi();
 }
 function pkPenaltyStart(){
+ pkShootoutArm=false;
  pkPenaltyState={mode:document.body.dataset.playerMode==='2'?'2':'1',turn:0,shots:[0,0],scores:[0,0],aimX:.5,aimY:.5,preset:null,phase:'aim',winner:null,message:''};
  running=false;started=false;matchEnded=true;
  if(document.body.dataset.gameType==='penalties'||!pkClock)document.getElementById('clock').textContent='04:00';else pkClockPaint();
@@ -1128,6 +1129,13 @@ function pkFutsalFullTime(){
  pkFutsalClockBadge(0);
  document.getElementById('startBtn').textContent='Full time — Reset to play';
  showToast(goalsA===goalsB?'FULL TIME — DRAW':'FULL TIME!');
+ /* A drawn knockout tie (the 2s Tournament final) is settled on penalties straight after full time.
+    Group ties pass allowDraw, so they simply stand as a draw. */
+ const ctx=window.pkMatchContext;
+ if(goalsA===goalsB&&ctx&&!ctx.allowDraw&&pkTournamentCtx.active){
+  pkShootoutArm=true;
+  setTimeout(()=>{if(!pkPenaltyState&&matchEnded&&pkTournamentCtx.active)pkPenaltyStart();else pkShootoutArm=false;},900);
+ }
 }
 function pkFutsalTick(dt){
  if(seconds<=0){pkFutsalAdded=0;pkFutsalWasted=0;pkFutsalClockBadge(0);}
@@ -1274,6 +1282,9 @@ let pkTournamentCtx={active:false,root:''};
 let pkTournamentFinish=null;
 /* Set while a playable Apex Cup tie is running: concedes the tie on exit. */
 let pkTournamentForfeit=null;
+/* Set between a drawn 2v2 knockout tie ending and its shootout opening, so the tie is not
+   banked as a draw in that gap. */
+let pkShootoutArm=false;
 window.pkMatchContext=null;
 function pkTournamentTeam(key,cfg){
   teams[key]={name:cfg.name,color:cfg.color,dark:cfg.dark||cfg.color,crest:cfg.crest||cfg.short||'⚽',short:cfg.short||String(cfg.name).slice(0,3).toUpperCase()};
@@ -1290,6 +1301,9 @@ function pkTournamentEnd(){
   document.body.classList.remove('pk-match');
   document.body.dataset.gameType='';
   document.body.dataset.playerMode='1';
+  pkShootoutArm=false;
+  /* Drop a 2v2 tie's pitch so the rest of the game is 11-a-side again. */
+  if(futsalMode||pkTwoVTwo){futsalMode=false;pkTwoVTwo=false;document.body.classList.remove('pk-futsal-mode');setPitchModeVisuals();}
   if(typeof pkPenaltyState!=='undefined')pkPenaltyState=null;
   pkPenaltyOverlay.hidden=true;
   pkPenaltyOverlay.classList.remove('pk-kick-left','pk-kick-center','pk-kick-right','pk-dive-left','pk-dive-right');
@@ -1345,15 +1359,17 @@ window.pkEngine={
       pkTournamentTeam('tourHome',opts.home);
       pkTournamentTeam('tourAway',opts.away);
       home='tourHome';away='tourAway';
-      futsalMode=false;
+      /* 2v2 ties (the 2s Tournament) run on the green two-a-side court with the 1:30 clock. */
+      futsalMode=!!opts.twoVTwo;pkTwoVTwo=!!opts.twoVTwo;
       document.body.dataset.playerMode='1';
-      document.body.dataset.gameType='classic';
+      document.body.dataset.gameType=futsalMode?'futsal':'classic';
+      document.body.classList.toggle('pk-futsal-mode',futsalMode);
       document.body.classList.remove('pk-setup');
       document.body.classList.add('pk-match');
       document.querySelectorAll('.pk-screen').forEach(s=>{s.hidden=true;});
       const cd=document.getElementById('pkCountdown');if(cd)cd.hidden=true;
       /* The Apex and Bazel pages are opaque full-screen overlays: hide whichever one launched this tie. */
-      ['apexRoot','bzlRoot'].forEach(id=>{const root=document.getElementById(id);if(!root)return;if(!root.hidden)pkTournamentCtx.root=id;root.hidden=true;});
+      ['apexRoot','bzlRoot','twRoot'].forEach(id=>{const root=document.getElementById(id);if(!root)return;if(!root.hidden)pkTournamentCtx.root=id;root.hidden=true;});
       const comp=document.querySelector('.matchhead .competition');if(comp)comp.textContent=opts.competition||'APEX CUP';
       const title=document.querySelector('.matchhead .matchtitle');if(title)title.textContent=opts.home.name+' vs '+opts.away.name;
       const quickEnd=document.getElementById('pkQuickEnd');if(quickEnd)quickEnd.style.display='none';
@@ -1364,7 +1380,7 @@ window.pkEngine={
       pkPenaltyState=null;pkPenaltyOverlay.hidden=true;
       // Tournament ties are classic matches: there is no difficulty prompt, so they always use the Classic Match default level.
       window.pkDifficulty=(opts.tournament||!window.pkDifficulty)?'easy':window.pkDifficulty;
-      reset();updateTeams();
+      reset();if(futsalMode){setFutsalCourtLines();setPitchModeVisuals();}updateTeams();
       window.pkMatchContext={allowDraw:!!opts.allowDraw,tournament:!!opts.tournament};window.pkTournamentMatch=!!opts.tournament;
       let done=false,timer=null;
       function finish(result){
@@ -1386,7 +1402,7 @@ window.pkEngine={
         }
         // The End Game / exit controls always return to the menu; treat that as an abandoned tie.
         if(!document.body.classList.contains('pk-match')){finish(null);return;}
-        if(matchEnded&&!pkPenaltyState){
+        if(matchEnded&&!pkPenaltyState&&!pkShootoutArm){
           finish({sa:goalsA,sb:goalsB,penA:null,penB:null,winner:goalsA===goalsB?null:(goalsA>goalsB?0:1)});
         }
       },250);
@@ -2190,8 +2206,8 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
 </style>
 <style>
 /* ===== THE APEX CUP ===== */
-#apexRoot,#bzlRoot{position:fixed;inset:0;z-index:3000;overflow-y:auto;background:radial-gradient(ellipse at 50% -10%,#1c5d38 0,#0b2417 45%,#050f0a 100%);color:#f0fdf4;font-family:var(--site-font-body)}
-#apexRoot[hidden],#bzlRoot[hidden]{display:none}
+#apexRoot,#bzlRoot,#twRoot{position:fixed;inset:0;z-index:3000;overflow-y:auto;background:radial-gradient(ellipse at 50% -10%,#1c5d38 0,#0b2417 45%,#050f0a 100%);color:#f0fdf4;font-family:var(--site-font-body)}
+#apexRoot[hidden],#bzlRoot[hidden],#twRoot[hidden]{display:none}
 .axp-topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;justify-content:space-between;padding:14px clamp(14px,3vw,30px);background:#08150fe8;border-bottom:1px solid #2b4f3a;backdrop-filter:blur(10px)}
 .axp-brand{display:flex;align-items:center;gap:11px;min-width:0}
 .axp-brand .axp-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#4ade80,#16a34a);font-size:22px;box-shadow:0 6px 18px #0006;flex:0 0 auto}
@@ -2426,6 +2442,46 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
       <div class="axp-champsub">THE WHOLE SQUAD LIFTS THE TROPHY TOGETHER</div>
     </div>
     <button type="button" id="bzlSkipBtn" class="axp-skip">SKIP CELEBRATION<small>Double-press to return home</small></button>
+  </div>
+</div>
+
+
+<div id="twRoot" hidden>
+  <div class="axp-topbar">
+    <div class="axp-brand"><div class="axp-mark">👥</div><div><b>2S TOURNAMENT</b><small>3 CLUBS · 2V2 MATCHES</small></div></div>
+    <span id="twStageChip" class="axp-stagechip">TEAM SELECTION</span>
+    <button type="button" id="twHomeBtn" class="axp-homebtn">← Home</button>
+  </div>
+  <main class="axp-main">
+    <section id="twSetup" class="axp-screen">
+      <div class="axp-eyebrow">3 CLUBS · ONE TROPHY</div>
+      <h1 class="axp-title">Choose your club</h1>
+      <p class="axp-sub">Pick the club you will lead in the 2s Tournament. Every tie is played two a side.</p>
+      <div class="axp-sectionhead"><h2>Your team</h2><div class="axp-line"></div><span id="twTeamCount" class="axp-hint">0 / 1 SELECTED</span></div>
+      <div id="twTeamGrid" class="axp-teamgrid"></div>
+      <div class="axp-startwrap"><button type="button" id="twStartBtn" class="axp-start" disabled>ENTER TOURNAMENT ⚽</button></div>
+      <p class="axp-note">One group of three: you play both rivals and draws are allowed. The top two meet again in the final, and a drawn final goes straight to a penalty shootout.</p>
+    </section>
+    <section id="twStage" class="axp-screen" hidden>
+      <div id="twStageBody"></div>
+    </section>
+  </main>
+  <div id="twMatchModal" class="axp-modal" hidden><div class="axp-matchcard" id="twMatchCard"></div></div>
+  <div id="twCelebration" class="axp-celebration" hidden>
+    <div class="axp-stadium">
+      <div class="axp-crowd axp-crowd-top" id="twCrowdTop"></div>
+      <div class="axp-crowd" id="twCrowdBottom"></div>
+      <div class="axp-floodlight left"></div><div class="axp-floodlight right"></div><div class="axp-stageglow"></div>
+    </div>
+    <canvas class="axp-confetti" id="twConfetti"></canvas>
+    <div class="axp-trophyzone">
+      <div class="axp-celebkicker">🏆 2S TOURNAMENT CHAMPIONS 🏆</div>
+      <div class="axp-champname" id="twChampName">CHAMPIONS</div>
+      <div class="axp-champsub" id="twChampSub">THE STADIUM ERUPTS!</div>
+      <div class="axp-lift" id="twLift"></div>
+      <div class="axp-champsub">THE WHOLE SQUAD LIFTS THE TROPHY TOGETHER</div>
+    </div>
+    <button type="button" id="twSkipBtn" class="axp-skip">SKIP CELEBRATION<small>Double-press to return home</small></button>
   </div>
 </div>
 
@@ -3104,15 +3160,12 @@ else initApex();
 })();
 </script>
 <script>
-/* ===== BAZEL TOURNAMENT: one group of three, then the final ===== */
-(()=>{
+/* ===== TOURNAMENT MODULE: one group of three, then the final =====
+   Runs twice: the Bazel Tournament and the 2s Tournament (2v2 matches). */
+window.pkMakeTournament=function(cfg){
 'use strict';
-const TEAMS=[
- {id:'chicken',name:'FC Chicken Wings',short:'FCW',strength:82,color:'#ff941f'},
- {id:'dragon',name:'Dragonwolves FC',short:'DWF',strength:84,color:'#2878ff'},
- {id:'bears',name:'Bears FC',short:'BRS',strength:76,color:'#8b4a2b'}
-];
-const $=id=>document.getElementById(id);
+const P=cfg.prefix,TEAMS=cfg.teams,SAVE_KEY=cfg.saveKey;
+const $=id=>document.getElementById(P+id);
 const byId=id=>TEAMS.find(t=>t.id===id);
 const state={selected:null,phase:'setup',group:null,fin:null,champion:null,busy:false,out:false,disqualified:false};
 let gen=0,celebTimer=null,lastSkip=0;
@@ -3140,11 +3193,11 @@ const mkMatch=(a,b)=>({a,b,sa:null,sb:null,penA:null,penB:null,winner:null,dq:fa
 
 /* ---------- SETUP ---------- */
 function renderSetup(){
-  $('bzlTeamGrid').innerHTML=TEAMS.map(t=>
+  $('TeamGrid').innerHTML=TEAMS.map(t=>
     '<button type="button" class="axp-teambtn'+(state.selected===t.id?' selected':'')+'" data-team="'+t.id+'">'+
     badge(t)+'<b>'+t.name+'</b><small>OVR '+t.strength+'</small></button>').join('');
-  $('bzlTeamCount').textContent=(state.selected?'1 / 1':'0 / 1')+' SELECTED';
-  $('bzlStartBtn').disabled=!state.selected;
+  $('TeamCount').textContent=(state.selected?'1 / 1':'0 / 1')+' SELECTED';
+  $('StartBtn').disabled=!state.selected;
 }
 
 /* ---------- GROUP STAGE: three clubs, one group ---------- */
@@ -3185,7 +3238,7 @@ function renderGroup(){
   }).join('');
   const games=g.matches.map((m,idx)=>{
     const mine=!m.played&&!g.done&&(m.a===g.meId||m.b===g.meId);
-    return matchLine(m)+(mine?'<button type="button" class="axp-playbtn" data-bzl="playg:'+idx+'">▶ PLAY · '+byId(m.a).short+' vs '+byId(m.b).short+'</button>':'');
+    return matchLine(m)+(mine?'<button type="button" class="axp-playbtn" data-tour="playg:'+idx+'">▶ PLAY · '+byId(m.a).short+' vs '+byId(m.b).short+'</button>':'');
   }).join('');
   let html='<div class="axp-eyebrow">GROUP STAGE · MATCHDAY</div><h1 class="axp-title">Road to the final</h1>'+
     '<p class="axp-sub">You play both rivals. Draws are allowed here — a level score simply stands, no shootout.</p>'+
@@ -3193,10 +3246,10 @@ function renderGroup(){
       '<div class="axp-grouphead"><b>GROUP STAGE</b><span class="axp-pill">'+(g.done?'COMPLETE':'IN PROGRESS')+'</span></div>'+
       '<table class="axp-table"><thead><tr><th class="axp-teamcol">TEAM</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>PTS</th></tr></thead><tbody>'+rows+'</tbody></table>'+
       '<div class="axp-groupgames">'+games+'</div></div></div>';
-  if(g.done)html+='<div class="axp-continue"><button type="button" data-bzl="to-final">GO TO THE FINAL →</button></div>';
+  if(g.done)html+='<div class="axp-continue"><button type="button" data-tour="to-final">GO TO THE FINAL →</button></div>';
   else html+='<p class="axp-note">Win or draw to keep your fate in your hands. The top two clubs of the group meet again in the final.</p>';
-  $('bzlStageBody').innerHTML=html;
-  $('bzlStageChip').textContent='GROUP STAGE';
+  $('StageBody').innerHTML=html;
+  $('StageChip').textContent='GROUP STAGE';
 }
 function finalCard(){
   const m=state.fin;
@@ -3209,27 +3262,27 @@ function finalCard(){
   const mine=!m.played&&(m.a===state.selected||m.b===state.selected);
   const foot='<div class="axp-matchfoot">'+(m.played?
       '<span class="axp-hint">'+(m.penA!=null?'WON ON PENALTIES':'FULL TIME')+'</span>':
-      '<button type="button" class="axp-simbtn" data-bzl="'+(mine?'playf':'simf')+'">'+(mine?'▶ PLAY MATCH':'SIMULATE')+'</button>')+'</div>';
+      '<button type="button" class="axp-simbtn" data-tour="'+(mine?'playf':'simf')+'">'+(mine?'▶ PLAY MATCH':'SIMULATE')+'</button>')+'</div>';
   return '<div class="axp-bracket"><div class="axp-round"><div class="axp-roundhead">FINAL</div>'+
     '<div class="axp-match'+(m.played?' axp-finished':'')+'">'+row(A,scA,m.winner===m.a)+row(B,scB,m.winner===m.b)+foot+'</div></div></div>';
 }
 
 function renderFinal(){
   let html='<div class="axp-eyebrow">KNOCKOUT STAGE · THE FINAL</div><h1 class="axp-title">One match, one trophy</h1>'+
-    '<p class="axp-sub">The top two of the group meet again. Level after extra time goes to a penalty shootout.</p>'+finalCard();
+    '<p class="axp-sub">'+cfg.finalSub+'</p>'+finalCard();
   if(state.out)html+='<p class="axp-note axp-elimnote">You did not reach the final — the champion is crowned without you.</p>';
-  $('bzlStageBody').innerHTML=html;
-  $('bzlStageChip').textContent='THE FINAL';
+  $('StageBody').innerHTML=html;
+  $('StageChip').textContent='THE FINAL';
 }
 function renderDone(){
   const champ=byId(state.champion);
   let html='<div class="axp-eyebrow">TOURNAMENT COMPLETE</div><h1 class="axp-title">'+champ.name+'</h1>'+
-    '<p class="axp-sub">Champions of the Bazel Tournament.</p>'+
+    '<p class="axp-sub">'+cfg.champSub+'</p>'+
     (state.out?'<p class="axp-note axp-elimnote">'+(state.disqualified?'You forfeited the final and were disqualified.':'You were knocked out of this tournament.')+'</p>':'')+
     finalCard()+
-    '<div class="axp-continue"><button type="button" data-bzl="replay">PLAY AGAIN</button> <button type="button" class="axp-ghost" data-bzl="home">HOME</button></div>';
-  $('bzlStageBody').innerHTML=html;
-  $('bzlStageChip').textContent='CHAMPIONS';
+    '<div class="axp-continue"><button type="button" data-tour="replay">PLAY AGAIN</button> <button type="button" class="axp-ghost" data-tour="home">HOME</button></div>';
+  $('StageBody').innerHTML=html;
+  $('StageChip').textContent='CHAMPIONS';
 }
 function renderStage(){
   if(state.phase==='group')renderGroup();
@@ -3243,8 +3296,8 @@ function startTournament(){
   state.group=makeGroup([me,pool[0],pool[1]],me);
   state.fin=null;state.champion=null;state.out=false;state.disqualified=false;state.busy=false;
   state.phase='group';
-  window.pkBazelInProgress=true;if(window.pkSyncResume)window.pkSyncResume();
-  $('bzlSetup').hidden=true;$('bzlStage').hidden=false;
+  window[cfg.flag]=true;if(window.pkSyncResume)window.pkSyncResume();
+  $('Setup').hidden=true;$('Stage').hidden=false;
   renderStage();
 }
 function goToFinal(){
@@ -3284,7 +3337,8 @@ async function playUserMatch(match,knockout,label){
     away:{name:oppTeam.name,short:oppTeam.short,color:oppTeam.color,dark:oppTeam.color},
     allowDraw:!knockout,
     tournament:true,
-    competition:'BAZEL TOURNAMENT · '+label
+    twoVTwo:!!cfg.twoVTwo,
+    competition:cfg.competition+' · '+label
   });
   if(!res)return null;
   if(res.forfeit){
@@ -3352,18 +3406,18 @@ async function playFinal(){
 
 /* ---------- CELEBRATION ---------- */
 function startCelebration(champ){
-  const cel=$('bzlCelebration');
+  const cel=$('Celebration');
   if(!cel)return;
-  window.pkCelebCrowd($('bzlCrowdTop'));
-  window.pkCelebCrowd($('bzlCrowdBottom'));
-  $('bzlChampName').textContent=champ.name;
-  $('bzlChampSub').textContent=champ.id===state.selected?'YOU ARE THE BAZEL TOURNAMENT CHAMPION!':'CHAMPIONS OF THE BAZEL TOURNAMENT';
-  $('bzlLift').innerHTML=window.pkLiftHTML(champ.color);
+  window.pkCelebCrowd($('CrowdTop'));
+  window.pkCelebCrowd($('CrowdBottom'));
+  $('ChampName').textContent=champ.name;
+  $('ChampSub').textContent=champ.id===state.selected?cfg.winLine:cfg.champLine;
+  $('Lift').innerHTML=window.pkLiftHTML(champ.color);
   lastSkip=0;
-  $('bzlSkipBtn').innerHTML='SKIP CELEBRATION<small>Double-press to return home</small>';
+  $('SkipBtn').innerHTML='SKIP CELEBRATION<small>Double-press to return home</small>';
   cel.hidden=false;
   cel.classList.add('axp-shake');
-  window.pkConfettiStart($('bzlConfetti'));
+  window.pkConfettiStart($('Confetti'));
   clearTimeout(celebTimer);
   celebTimer=setTimeout(()=>{if(!cel.hidden)goHome();},11000);
 }
@@ -3373,139 +3427,172 @@ function goHome(){
   gen++;
   clearTimeout(celebTimer);
   window.pkConfettiStop();
-  $('bzlRoot').hidden=true;
-  const cel=$('bzlCelebration');
+  $('Root').hidden=true;
+  const cel=$('Celebration');
   cel.hidden=true;cel.classList.remove('axp-shake');
-  $('bzlMatchModal').hidden=true;
+  $('MatchModal').hidden=true;
   document.querySelectorAll('.pk-screen').forEach(sc=>{sc.hidden=sc.id!=='pkHome';});
   const home=document.getElementById('pkHome');
   if(home){home.hidden=false;home.style.display='flex';home.style.visibility='visible';home.style.opacity='1';}
   document.body.classList.remove('pk-match','pk-setup');
   state.busy=false;
-  window.pkBazelInProgress=state.phase==='group'||state.phase==='final';
+  window[cfg.flag]=state.phase==='group'||state.phase==='final';
   pkBzlSave();
   if(window.pkSyncResume)window.pkSyncResume();
 }
-function resetBazel(){
-  window.pkBazelInProgress=false;
-  try{localStorage.removeItem(BZL_KEY);}catch(e){}
+function resetTournament(){
+  window[cfg.flag]=false;
+  try{localStorage.removeItem(SAVE_KEY);}catch(e){}
   if(window.pkSyncResume)window.pkSyncResume();
   state.selected=null;state.phase='setup';state.group=null;state.fin=null;state.champion=null;
   state.busy=false;state.out=false;state.disqualified=false;
-  $('bzlSetup').hidden=false;$('bzlStage').hidden=true;
-  $('bzlCelebration').hidden=true;$('bzlMatchModal').hidden=true;
-  $('bzlStageChip').textContent='TEAM SELECTION';
+  $('Setup').hidden=false;$('Stage').hidden=true;
+  $('Celebration').hidden=true;$('MatchModal').hidden=true;
+  $('StageChip').textContent='TEAM SELECTION';
   renderSetup();
 }
-window.pkResetBazel=resetBazel;
-window.pkResumeBazel=function(){
+window[cfg.api.reset]=resetTournament;
+window[cfg.api.resume]=function(){
   if(state.phase!=='group'&&state.phase!=='final')return false;
   document.querySelectorAll('.pk-screen').forEach(sc=>{sc.hidden=true;});
-  const root=$('bzlRoot');
+  const root=$('Root');
   if(root){root.hidden=false;root.scrollTop=0;}
-  $('bzlSetup').hidden=true;$('bzlStage').hidden=false;$('bzlMatchModal').hidden=true;
-  window.pkBazelInProgress=true;
+  $('Setup').hidden=true;$('Stage').hidden=false;$('MatchModal').hidden=true;
+  window[cfg.flag]=true;
   if(window.pkSyncResume)window.pkSyncResume();
   renderStage();
   return true;
 };
 
 /* ---------- SAVE (installed app only) ---------- */
-const BZL_KEY='pkBazelSave.v1';
 const APP_MODE=(()=>{try{return !!(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true||/[?&]app=1(&|$)/.test(location.search);}catch(e){return false;}})();
 function pkBzlSave(){
   if(!APP_MODE)return;
   try{
     if(state.phase==='group'||state.phase==='final'){
-      localStorage.setItem(BZL_KEY,JSON.stringify({v:1,savedAt:Date.now(),selected:state.selected,phase:state.phase,group:state.group,fin:state.fin,out:!!state.out,disqualified:!!state.disqualified}));
+      localStorage.setItem(SAVE_KEY,JSON.stringify({v:1,savedAt:Date.now(),selected:state.selected,phase:state.phase,group:state.group,fin:state.fin,out:!!state.out,disqualified:!!state.disqualified}));
     }else{
-      localStorage.removeItem(BZL_KEY);
+      localStorage.removeItem(SAVE_KEY);
     }
   }catch(e){}
 }
 function pkBzlRestore(){
   if(!APP_MODE)return false;
   let d=null;
-  try{d=JSON.parse(localStorage.getItem(BZL_KEY)||'null');}catch(e){d=null;}
+  try{d=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');}catch(e){d=null;}
   if(!d||d.v!==1)return false;
   if(d.phase!=='group'&&d.phase!=='final')return false;
   if(!d.selected||!byId(d.selected))return false;
   if(!d.group||!Array.isArray(d.group.matches)||!Array.isArray(d.group.teams))return false;
   state.selected=d.selected;state.phase=d.phase;state.group=d.group;state.fin=d.fin||null;
   state.out=!!d.out;state.disqualified=!!d.disqualified;state.busy=false;
-  window.pkBazelInProgress=true;
+  window[cfg.flag]=true;
   if(window.pkSyncResume)window.pkSyncResume();
   return true;
 }
-window.pkBazelSaveNow=pkBzlSave;
-window.pkBazelRestoreSaved=pkBzlRestore;
+window[cfg.api.save]=pkBzlSave;
+window[cfg.api.restore]=pkBzlRestore;
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')pkBzlSave();});
 window.addEventListener('pagehide',()=>pkBzlSave());
 
 /* ---------- OPEN ---------- */
-function openBazelFresh(){
-  resetBazel();
+function openTournamentFresh(){
+  resetTournament();
   document.querySelectorAll('.pk-screen').forEach(sc=>{sc.hidden=true;});
-  const root=$('bzlRoot');
+  const root=$('Root');
   root.hidden=false;root.scrollTop=0;
-  $('bzlSetup').hidden=false;$('bzlStage').hidden=true;
-  window.pkBazelInProgress=false;
+  $('Setup').hidden=false;$('Stage').hidden=true;
+  window[cfg.flag]=false;
   if(window.pkSyncResume)window.pkSyncResume();
 }
-function openBazel(){
+function openTournament(){
   if(state.phase==='group'||state.phase==='final'){
-    if(!window.pkAsk){openBazelFresh();return;}
+    if(!window.pkAsk){openTournamentFresh();return;}
     window.pkAsk({
       title:'Tournament in progress',
-      text:'You already have a Bazel Tournament run going. Starting a new tournament discards your current progress for good.',
+      text:'You already have a '+cfg.title+' run going. Starting a new tournament discards your current progress for good.',
       yes:'LOSE PROGRESS & START NEW',
       no:'CONTINUE TOURNAMENT'
     }).then(loseIt=>{
-      if(loseIt)openBazelFresh();
-      else if(window.pkResumeBazel)window.pkResumeBazel();
+      if(loseIt)openTournamentFresh();
+      else if(window[cfg.api.resume])window[cfg.api.resume]();
     });
     return;
   }
-  openBazelFresh();
+  openTournamentFresh();
 }
 
 /* ---------- EVENTS ---------- */
 function handleStageClick(e){
-  const b=e.target.closest('[data-bzl]');
+  const b=e.target.closest('[data-tour]');
   if(!b)return;
-  const parts=b.dataset.bzl.split(':');
+  const parts=b.dataset.tour.split(':');
   const act=parts[0];
   if(act==='playg')playGroupMatch(parseInt(parts[1],10));
   else if(act==='to-final')goToFinal();
   else if(act==='playf')playFinal();
   else if(act==='simf')simulateFinal();
-  else if(act==='replay')resetBazel();
+  else if(act==='replay')resetTournament();
   else if(act==='home')goHome();
 }
-function initBazel(){
+function initTournament(){
   renderSetup();
-  $('bzlHomeBtn').addEventListener('click',goHome);
-  $('bzlStartBtn').addEventListener('click',()=>{if(state.selected)startTournament();});
-  $('bzlTeamGrid').addEventListener('click',e=>{
+  $('HomeBtn').addEventListener('click',goHome);
+  $('StartBtn').addEventListener('click',()=>{if(state.selected)startTournament();});
+  $('TeamGrid').addEventListener('click',e=>{
     const b=e.target.closest('[data-team]');
     if(!b)return;
     state.selected=b.dataset.team;
     renderSetup();
   });
-  $('bzlStageBody').addEventListener('click',handleStageClick);
-  $('bzlSkipBtn').addEventListener('click',()=>{
+  $('StageBody').addEventListener('click',handleStageClick);
+  $('SkipBtn').addEventListener('click',()=>{
     const now=Date.now();
     if(now-lastSkip<750){goHome();return;}
     lastSkip=now;
-    $('bzlSkipBtn').innerHTML='PRESS AGAIN TO SKIP<small>Double-press to return home</small>';
+    $('SkipBtn').innerHTML='PRESS AGAIN TO SKIP<small>Double-press to return home</small>';
   });
-  const card=document.getElementById('pkBazelTournament');
-  if(card)card.addEventListener('click',e=>{e.preventDefault();openBazel();});
+  const card=document.getElementById(cfg.cardId);
+  if(card)card.addEventListener('click',e=>{e.preventDefault();openTournament();});
   pkBzlRestore();
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initBazel);
-else initBazel();
-})();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initTournament);
+else initTournament();
+return {open:openTournament,reset:resetTournament,resume:window[cfg.api.resume],restore:pkBzlRestore,save:pkBzlSave};
+};
+/* --- instance 1: Bazel League, classic 11-a-side ties --- */
+window.pkBazelTournament=window.pkMakeTournament({
+  prefix:'bzl',
+  teams:[
+    {id:'chicken',name:'FC Chicken Wings',short:'FCW',strength:82,color:'#ff941f'},
+    {id:'dragon',name:'Dragonwolves FC',short:'DWF',strength:84,color:'#2878ff'},
+    {id:'bears',name:'Bears FC',short:'BRS',strength:76,color:'#8b4a2b'}
+  ],
+  saveKey:'pkBazelSave.v1',flag:'pkBazelInProgress',
+  api:{reset:'pkResetBazel',resume:'pkResumeBazel',save:'pkBazelSaveNow',restore:'pkBazelRestoreSaved'},
+  cardId:'pkBazelTournament',title:'Bazel Tournament',competition:'BAZEL TOURNAMENT',
+  champSub:'Champions of the Bazel Tournament.',
+  winLine:'YOU ARE THE BAZEL TOURNAMENT CHAMPION!',champLine:'CHAMPIONS OF THE BAZEL TOURNAMENT',
+  finalSub:'The top two of the group meet again. Level after extra time goes to a penalty shootout.',
+  twoVTwo:false
+});
+/* --- instance 2: Other > 2s Tournament, every tie is a 2v2 match --- */
+window.pkTwosTournament=window.pkMakeTournament({
+  prefix:'tw',
+  teams:[
+    {id:'elks',name:'Elks',short:'ELK',strength:78,color:'#1e3a8a'},
+    {id:'chicken',name:'FC Chicken Wings',short:'FCW',strength:82,color:'#ff941f'},
+    {id:'arg',name:'Argens',short:'ARG',strength:72,color:'#ffffff'}
+  ],
+  saveKey:'pkTwosSave.v1',flag:'pkTwosInProgress',
+  api:{reset:'pkResetTwos',resume:'pkResumeTwos',save:'pkTwosSaveNow',restore:'pkTwosRestoreSaved'},
+  cardId:'pkTwosTournament',title:'2s Tournament',competition:'2S TOURNAMENT',
+  champSub:'Champions of the 2s Tournament.',
+  winLine:'YOU ARE THE 2S TOURNAMENT CHAMPION!',champLine:'CHAMPIONS OF THE 2S TOURNAMENT',
+  finalSub:'The top two of the group meet again. Level at full time goes straight to a penalty shootout.',
+  twoVTwo:true
+});
+
 </script>
 
 <script>
@@ -3584,7 +3671,7 @@ else initBazel();
 
 <script>
 window.pkSyncResume=function(){
-  const active=window.pkApexInProgress?'apex':(window.pkBazelInProgress?'bazel':'');
+  const active=window.pkApexInProgress?'apex':(window.pkBazelInProgress?'bazel':(window.pkTwosInProgress?'twos':''));
   window.pkActiveTournament=active||null;
   const b=document.getElementById('pkResumeTournament');
   if(b)b.hidden=!active;
@@ -3626,21 +3713,26 @@ window.addEventListener('DOMContentLoaded',()=>{
   const b=document.getElementById('pkResumeTournament');
   if(b)b.addEventListener('click',()=>{
     if(window.pkActiveTournament==='bazel'&&window.pkResumeBazel)window.pkResumeBazel();
+    else if(window.pkActiveTournament==='twos'&&window.pkResumeTwos)window.pkResumeTwos();
     else if(window.pkResumeApex)window.pkResumeApex();
   });
   const c=document.getElementById('pkCancelTournament');
   if(c)c.addEventListener('click',()=>{
     const bazel=window.pkActiveTournament==='bazel';
+    const twos=window.pkActiveTournament==='twos';
     window.pkAsk({
       title:'Cancel tournament?',
-      text:bazel?'This ends your Bazel Tournament run and erases the progress you have made. You cannot resume it afterwards.':'This ends your Apex Cup run and erases the progress you have made. You cannot resume it afterwards.',
+      text:bazel?'This ends your Bazel Tournament run and erases the progress you have made. You cannot resume it afterwards.'
+        :twos?'This ends your 2s Tournament run and erases the progress you have made. You cannot resume it afterwards.'
+        :'This ends your Apex Cup run and erases the progress you have made. You cannot resume it afterwards.',
       yes:'CANCEL TOURNAMENT',
       no:'KEEP PLAYING'
     }).then(ok=>{
       if(!ok)return;
       if(bazel&&window.pkResetBazel)window.pkResetBazel();
+      else if(twos&&window.pkResetTwos)window.pkResetTwos();
       else if(window.pkResetApex)window.pkResetApex();
-      window.pkApexInProgress=false;window.pkBazelInProgress=false;
+      window.pkApexInProgress=false;window.pkBazelInProgress=false;window.pkTwosInProgress=false;
       window.pkSyncResume();
       const home=document.getElementById('pkHome');
       if(home){home.hidden=false;}
@@ -3728,7 +3820,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='66';
+  const BUILD='67';
   let chip=null;
   function el(){
     if(chip)return chip;
