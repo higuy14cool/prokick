@@ -144,7 +144,7 @@
     <button class="pk-mode" id="pkBazelLeague"><span>⭐</span><b>Bazel League</b><small>Bazel League Teams</small></button>
     <button class="pk-mode" id="pkTwoVTwoLeague" type="button"><span>👥</span><b>2v2 Super League</b><small>Two players a side · FC Chicken Wings vs Cookers FC</small></button>
     <button class="pk-mode" id="pkApexCup" type="button"><span>🏆</span><b>The Apex Cup Tournament</b><small>12 teams · Group stage → Knockouts → Final</small></button>
-    <button class="pk-mode" id="pkOtherLeague" type="button"><span>🌐</span><b>Other</b><small>other modes</small></button>
+    <button class="pk-mode" id="pkOtherLeague" type="button"><span>🌐</span><b>Other</b><small>Other modes</small></button>
   </div>
 </section>
 <section id="pkGameTypes" class="pk-screen" hidden><button id="pkGameTypesBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">CHOOSE YOUR GAME</div><h1>Pick a game mode</h1><p>Choose how you want to play ProKick.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkClassicMatch"><span>🏟️</span><b>Classic Match</b><small>Play a full soccer match</small></button><button class="pk-mode" id="pkFutsal"><span>⚡</span><b>Futsal</b><small>Fast indoor soccer</small></button><button class="pk-mode" id="pkPenalties"><span>🥅</span><b>Penalties</b><small>Test your penalty skills</small></button></div></section>
@@ -1003,7 +1003,7 @@ function pkClockEndPeriod(){
  const c=pkClock,level=goalsA===goalsB,drawAllowed=!!(window.pkMatchContext&&window.pkMatchContext.allowDraw),practice=document.body.dataset.gameType==='penalties';
  let next='ft';
  if(c.key==='h1')next='h2';
- else if(c.key==='h2')next=(level&&!drawAllowed&&!practice)?'et1':'ft';
+ else if(c.key==='h2')next=(level&&!drawAllowed&&!practice&&pkTournamentCtx.active)?'et1':'ft';
  else if(c.key==='et1')next='et2';
  else next=level?'pen':'ft';
  if(next==='ft'){
@@ -1258,6 +1258,19 @@ window.pkSetGameType=function(type){
  if(footer)footer.textContent=futsalMode?(pkTwoVTwo?'2v2 · Two players a side · Green pitch · 1:30 matches with added time':'5-a-side · Indoor court · 1:30 matches, clock stops when the ball is dead'):'11-a-side · Four-minute matches · Goal replays';
  if(fieldPill)fieldPill.textContent=futsalMode?(pkTwoVTwo?'● 2V2 GREEN PITCH':'● FUTSAL COURT'):'● 3D LIVE MATCH';
 };
+/* The pitch look follows futsalMode/pkTwoVTwo, but the match chrome is only written by the
+   setup screens. Tournament ties skip those screens, so they apply the same chrome here and
+   look exactly like the mode they play. */
+window.pkApplyMatchChrome=function(){
+ const futsal=futsalMode,two=!!pkTwoVTwo;
+ const status=document.querySelector('.status'),footer=document.querySelector('.bottom span:last-child'),squadTitle=document.querySelector('.sidebar .panel:nth-child(2) h2'),fieldPill=document.querySelector('.field-overlay .pill');
+ if(status)status.innerHTML=futsal?(two?'<span class="dot"></span> 2V2 · TWO A SIDE <span style="color:#5e9270">•</span> 01:30 MAX':'<span class="dot"></span> INDOOR FUTSAL <span style="color:#5e9270">•</span> 01:30 MAX'):'<span class="dot"></span> 3D MATCH <span style="color:#5e9270">•</span> 4:00 GAME · POSSIBLE ADDED TIME';
+ if(footer)footer.textContent=futsal?(two?'2v2 · Two players a side · Green pitch · 1 minute 30 second matches':'5-a-side · Indoor court · 1 minute 30 second matches'):'11-a-side · Four-minute matches · Goal replays';
+ if(squadTitle)squadTitle.textContent=futsal?(two?'2v2 squad · 2':'Futsal squad · 5'):'FC Chicken Wings XI';
+ if(fieldPill)fieldPill.textContent=futsal?(two?'● 2V2 GREEN PITCH':'● FUTSAL COURT'):'● 3D LIVE MATCH';
+ const limit=futsal?(two?2:5):99;
+ document.querySelectorAll('.sidebar .playerlist .player').forEach((row,i)=>{row.style.display=i>=limit?'none':'';});
+};
 function reset(){running=false;started=false;matchEnded=false;window.pkMatchContext={allowDraw:false};window.pkTournamentMatch=false;pkPenGoalCtx=null;pkImLastShot=null;pkClockReset();foulFreeze=0;goalSequence=null;replayFrames=[];replayCapture=0;lastTouchPlayerIndex=-1;lastTouchTeam=-1;replayBanner.classList.remove('show');skipReplayButton.classList.remove('show');document.getElementById('toast').classList.remove('show');toastTimer=0;seconds=0;goalsA=0;goalsB=0;document.getElementById('clock').textContent='00:00';document.getElementById('startBtn').textContent='▶ Start match';document.getElementById('pauseBtn').textContent='Ⅱ Pause';makePlayers();updateTeams();}
 document.getElementById('startBtn').addEventListener('click',()=>{if(matchEnded){showToast('FULL TIME — RESET TO PLAY');return;}running=true;started=true;document.getElementById('startBtn').textContent='▶ Match running';});document.getElementById('pauseBtn').addEventListener('click',()=>{if(goalSequence||matchEnded)return;running=!running;document.getElementById('pauseBtn').textContent=running?'Ⅱ Pause':'▶ Resume';if(running)started=true;});document.getElementById('resetBtn').addEventListener('click',reset);
 document.getElementById('applyBtn').addEventListener('click',()=>{home=document.getElementById('teamA').value;away=document.getElementById('teamB').value;if(home===away){away=home==='chicken'?'dragon':'chicken';document.getElementById('teamB').value=away;showToast('Choose two different teams!')}reset();updateTeams();});
@@ -1309,6 +1322,7 @@ function pkTournamentEnd(){
   pkPenaltyOverlay.classList.remove('pk-kick-left','pk-kick-center','pk-kick-right','pk-dive-left','pk-dive-right');
   const victory=document.getElementById('pkPenaltyVictory');if(victory)victory.classList.remove('show');
   reset();
+  if(window.pkApplyMatchChrome)window.pkApplyMatchChrome();
   home='chicken';away='dragon';updateTeams();
   /* Reveal the tournament page the tie was launched from (Apex or Bazel), not a fixed one. */
   const root=document.getElementById(pkTournamentCtx.root);
@@ -1380,7 +1394,9 @@ window.pkEngine={
       pkPenaltyState=null;pkPenaltyOverlay.hidden=true;
       // Tournament ties are classic matches: there is no difficulty prompt, so they always use the Classic Match default level.
       window.pkDifficulty=(opts.tournament||!window.pkDifficulty)?'easy':window.pkDifficulty;
-      reset();if(futsalMode){setFutsalCourtLines();setPitchModeVisuals();}updateTeams();
+      reset();if(futsalMode){setFutsalCourtLines();setPitchModeVisuals();}
+      if(window.pkApplyMatchChrome)window.pkApplyMatchChrome();
+      updateTeams();
       window.pkMatchContext={allowDraw:!!opts.allowDraw,tournament:!!opts.tournament};window.pkTournamentMatch=!!opts.tournament;
       let done=false,timer=null;
       function finish(result){
@@ -3820,7 +3836,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='68';
+  const BUILD='69';
   let chip=null;
   function el(){
     if(chip)return chip;
