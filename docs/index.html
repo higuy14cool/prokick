@@ -361,7 +361,7 @@ function pkAwardKick(fouledTeam,x,y){
   else pkOppFreeKickBegin(fouledTeam,taker);
  }
 }
-function pkSetPieceHuman(team){return team===0||document.body.dataset.playerMode==='2'||!!pkTwoVTwo;}
+function pkSetPieceHuman(team){return team===0||document.body.dataset.playerMode==='2';}
 function tackle(p){
  if(!running||goalSequence||matchEnded||foulFreeze>0||pkSetPiece)return;
  const opponent=nearestPlayer(p.x,p.y,1);
@@ -1108,7 +1108,7 @@ function pkCelebrationCapture(dt){
 let futsalMode=false;
 let pkTwoVTwo=false;
 window.pkSetTwoVTwo=function(on){
- pkTwoVTwo=!!on;
+ pkTwoVTwo=!!on;pkFutsalStopClock=false;
  setPitchModeVisuals();
 };
 const updateBeforeFutsalDuration=update;
@@ -1116,6 +1116,8 @@ const updateBeforeFutsalDuration=update;
    2v2 Super League runs a continuous clock and plays out its stoppage time before full time. */
 const PK_FUTSAL_SECONDS=90;
 let pkFutsalAdded=0,pkFutsalWasted=0;
+/* 2v2 Super League runs a continuous clock; the 2s Tournament stops it while the ball is dead. */
+let pkFutsalStopClock=false;
 function pkFutsalClockBadge(added){
  const box=document.getElementById('pkAddedBadge');
  if(!box)return;
@@ -1123,6 +1125,7 @@ function pkFutsalClockBadge(added){
  else{box.hidden=true;box.textContent='';}
 }
 function pkFutsalFullTime(){
+ if(pkFutsalStopClock)pkFutsalAdded=0;
  seconds=pkTwoVTwo?PK_FUTSAL_SECONDS+pkFutsalAdded:PK_FUTSAL_SECONDS;
  running=false;matchEnded=true;
  document.getElementById('clock').textContent='01:30';
@@ -1140,7 +1143,7 @@ function pkFutsalFullTime(){
 function pkFutsalTick(dt){
  if(seconds<=0){pkFutsalAdded=0;pkFutsalWasted=0;pkFutsalClockBadge(0);}
  const busy=!!goalSequence||foulFreeze>0||!!pkSetPiece;
- if(!pkTwoVTwo){
+ if(!pkTwoVTwo||pkFutsalStopClock){
   if(busy)return;                       // ball dead: clock frozen, no added time
   seconds=Math.min(PK_FUTSAL_SECONDS,seconds+dt);
   document.getElementById('clock').textContent=pkClockFmt(seconds);
@@ -1374,7 +1377,7 @@ window.pkEngine={
       pkTournamentTeam('tourAway',opts.away);
       home='tourHome';away='tourAway';
       /* 2v2 ties (the 2s Tournament) run on the green two-a-side court with the 1:30 clock. */
-      futsalMode=!!opts.twoVTwo;pkTwoVTwo=!!opts.twoVTwo;
+      futsalMode=!!opts.twoVTwo;pkTwoVTwo=!!opts.twoVTwo;pkFutsalStopClock=!!opts.stopClock;
       document.body.dataset.playerMode='1';
       document.body.dataset.gameType=futsalMode?'futsal':'classic';
       document.body.classList.toggle('pk-futsal-mode',futsalMode);
@@ -3354,6 +3357,7 @@ async function playUserMatch(match,knockout,label){
     allowDraw:!knockout,
     tournament:true,
     twoVTwo:!!cfg.twoVTwo,
+    stopClock:!!cfg.stopClock,
     competition:cfg.competition+' · '+label
   });
   if(!res)return null;
@@ -3606,7 +3610,7 @@ window.pkTwosTournament=window.pkMakeTournament({
   champSub:'Champions of the 2s Tournament.',
   winLine:'YOU ARE THE 2S TOURNAMENT CHAMPION!',champLine:'CHAMPIONS OF THE 2S TOURNAMENT',
   finalSub:'The top two of the group meet again. Level at full time goes straight to a penalty shootout.',
-  twoVTwo:true
+  twoVTwo:true,stopClock:true
 });
 
 </script>
@@ -3836,7 +3840,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='69';
+  const BUILD='70';
   let chip=null;
   function el(){
     if(chip)return chip;
