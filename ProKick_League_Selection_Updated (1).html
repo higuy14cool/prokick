@@ -2001,7 +2001,7 @@ body.pk-match .field-wrap .gamepad .action-btn{pointer-events:auto}
 <script>
 // Back navigation follows the actual menu order: Setup -> Player choice -> Game type -> Home.
 (()=>{
-  const screenIds=['pkHome','pkLeagueSelect','pkGameTypes','pkModes','pkSetup','pkCountdown'];
+  const screenIds=['pkHome','pkLeagueSelect','pkBazelOptions','pkOtherOptions','pkGameTypes','pkModes','pkSetup','pkCountdown'];
   const previous={pkSetup:'pkModes',pkModes:'pkGameTypes',pkGameTypes:'pkLeagueSelect'};
   const screen=id=>document.getElementById(id);
   function showScreen(id){
@@ -2024,7 +2024,19 @@ body.pk-match .field-wrap .gamepad .action-btn{pointer-events:auto}
     event.stopImmediatePropagation();
     const current=button.id==='pkBack'?'pkSetup':button.id==='pkModesBack'?'pkModes':button.id==='pkLeagueBack'?'pkLeagueSelect':'pkGameTypes';
     if(current==='pkSetup'){restoreTeamPanel();document.body.dataset.playerMode='1';}
-    showScreen(previous[current]||'pkHome');
+    /* Back returns to the screen you actually came from. The 2v2 Super League goes back to the
+       league list, and Friendly Match back to the Other list, instead of the Bazel game modes. */
+    let target=previous[current]||'pkHome';
+    if(current==='pkModes'&&window.pkTwoVTwo){
+      target='pkLeagueSelect';
+      if(window.pkExitTwoVTwo)window.pkExitTwoVTwo();
+    }else if(current==='pkGameTypes'){
+      if(window.pkFriendly)target='pkOtherOptions';
+      else if(window.pkFromBazel)target='pkBazelOptions';
+    }
+    if(target==='pkLeagueSelect'){window.pkFromBazel=false;window.pkFriendly=false;}
+    else if(target==='pkOtherOptions')window.pkFriendly=false;
+    showScreen(target);
   },true);
 })();
 </script>
@@ -3788,7 +3800,7 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(!b)return;
     if(b.id==='pkOtherLeague'){window.pkFriendly=true;show('pkOtherOptions');return;}
     if(b.id==='pkSeasonMatch'){window.pkFriendly=false;if(eyebrow)eyebrow.textContent='CHOOSE YOUR GAME';show('pkGameTypes');return;}
-    if(b.id==='pkBazelBack'){show('pkLeagueSelect');return;}
+    if(b.id==='pkBazelBack'){window.pkFromBazel=false;show('pkLeagueSelect');return;}
     if(b.id==='pkOtherBack'){window.pkFriendly=false;show('pkLeagueSelect');return;}
     if(b.id==='pkFriendlyMatch'){
       window.pkFriendly=true;
@@ -3803,7 +3815,6 @@ window.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('click',event=>{
     const b=event.target.closest&&event.target.closest('button');
     if(!b)return;
-    if(b.id==='pkGameTypesBack'&&window.pkFromBazel){setTimeout(()=>show('pkBazelOptions'),0);return;}
     // Runs after every other Continue handler, so the club list always matches the mode.
     if(b.id==='pkContinue')setTimeout(()=>{if(!window.pkTwoVTwo)applyTeamList();},0);
   },true);
@@ -3823,7 +3834,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='71';
+  const BUILD='72';
   let chip=null;
   function el(){
     if(chip)return chip;
