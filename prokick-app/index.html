@@ -1281,7 +1281,7 @@ function reset(){running=false;started=false;matchEnded=false;window.pkMatchCont
 document.getElementById('startBtn').addEventListener('click',()=>{if(matchEnded){showToast('FULL TIME — RESET TO PLAY');return;}running=true;started=true;document.getElementById('startBtn').textContent='▶ Match running';});document.getElementById('pauseBtn').addEventListener('click',()=>{if(goalSequence||matchEnded)return;running=!running;document.getElementById('pauseBtn').textContent=running?'Ⅱ Pause':'▶ Resume';if(running)started=true;});document.getElementById('resetBtn').addEventListener('click',reset);
 document.getElementById('applyBtn').addEventListener('click',()=>{home=document.getElementById('teamA').value;away=document.getElementById('teamB').value;if(home===away){away=home==='chicken'?'dragon':'chicken';document.getElementById('teamB').value=away;showToast('Choose two different teams!')}reset();updateTeams();});
 // Keep the complete club list available in the shared setup panel for Classic and Futsal.
-const availableClubs=[['chicken','FC Chicken Wings'],['dragon','Dragonwolves FC'],['bears','Bears FC']];
+const availableClubs=[['chicken','FC Chicken Wings'],['dragon','Dragonwolves FC'],['bears','Bears FC'],['cookers','Cookers FC']];
 ['teamA','teamB'].forEach(id=>{const select=document.getElementById(id);availableClubs.forEach(([value,label])=>{if(![...select.options].some(option=>option.value===value)){const option=document.createElement('option');option.value=value;option.textContent=label;select.appendChild(option);}});});
 function chooseDifferentOpponent(){const teamA=document.getElementById('teamA'),teamB=document.getElementById('teamB');if(teamA.value===teamB.value){const next=availableClubs.find(([value])=>value!==teamA.value);teamB.value=next?next[0]:'dragon';}}
 document.getElementById('teamA').addEventListener('change',chooseDifferentOpponent);
@@ -3829,7 +3829,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   const FRIENDLY=[['chicken','FC Chicken Wings'],['dragon','Dragonwolves FC'],['bears','Bears FC'],
     ['arg','Argens'],['apu','Apex United'],['irc','Ironclad FC'],['vgs','Vanguard Strikers'],
     ['cra','Crimson Athletic'],['vlr','Velocity Rovers'],['tns','Titan Sporting'],
-    ['rso','Real Sovereign'],['phx','Phantom XI']];
+    ['rso','Real Sovereign'],['phx','Phantom XI'],['cookers','Cookers FC']];
   const types=el('pkGameTypes');
   const eyebrow=types&&types.querySelector('.pk-eyebrow');
   window.pkFriendly=false;
@@ -3896,7 +3896,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='76';
+  const BUILD='77';
   let chip=null;
   function el(){
     if(chip)return chip;
