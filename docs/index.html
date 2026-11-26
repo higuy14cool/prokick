@@ -2341,6 +2341,7 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
 /* Bracket */
 .axp-bracket{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
 @media(max-width:900px){.axp-bracket{grid-template-columns:1fr}.axp-round{margin-bottom:4px}}
+@media(min-width:901px){.axp-round-third{grid-column:3;margin-top:38px}}
 .axp-round{display:flex;flex-direction:column;gap:10px}
 .axp-roundhead{font-size:9px;font-weight:950;letter-spacing:2px;color:#8fb59d;text-align:center;padding:2px 0 3px}
 .axp-match{background:#0e2418;border:1px solid #2c5039;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:7px}
@@ -2756,20 +2757,35 @@ function koMatchCard(m,ri,mi){
     '<span class="axp-mname">'+t.name+'</span><span class="axp-mscore'+(m.played?'':' axp-pending')+'">'+(m.played?score:'–')+'</span></div>';
   let foot='';
   if(!m.played){
-    foot='<div class="axp-matchfoot"><button type="button" class="axp-simbtn" data-kmatch="'+ri+':'+mi+'">'+(mine?'▶ PLAY MATCH':'SIMULATE')+'</button></div>';
+    // The final waits for the third-place play-off so the champion is never
+    // crowned while a tie is still outstanding.
+    const tpPending=state.rounds[ri].short==='F'&&state.rounds.some(r=>r.short==='TP'&&r.matches.some(x=>!x.played));
+    foot=tpPending
+      ? '<div class="axp-matchfoot"><span class="axp-hint">THIRD-PLACE PLAYOFF FIRST</span></div>'
+      : '<div class="axp-matchfoot"><button type="button" class="axp-simbtn" data-kmatch="'+ri+':'+mi+'">'+(mine?'▶ PLAY MATCH':'SIMULATE')+'</button></div>';
   }else{
     foot='<div class="axp-matchfoot"><span class="axp-hint">'+(m.dq?'DISQUALIFIED · FORFEIT 0–3':(m.penA!=null?'WON ON PENALTIES':'FULL TIME'))+(m.winner?' · '+byId(m.winner).name+(state.rounds[ri]&&state.rounds[ri].short==='F'?' WIN THE CUP':' ADVANCE'):'')+'</span></div>';
   }
   return '<div class="axp-match'+(mine?' axp-mine':'')+(m.played?' axp-finished':'')+'">'+
     row(A,sc?sc.a:'',m.winner===m.a)+row(B,sc?sc.b:'',m.winner===m.b)+foot+'</div>';
 }
+function koOrder(){
+  // The final reads before the third-place play-off, which sits under it.
+  const rank={QF:0,SF:1,F:2,TP:3};
+  return state.rounds.map((r,i)=>i).sort((a,b)=>(rank[state.rounds[a].short]||0)-(rank[state.rounds[b].short]||0));
+}
+function koBracketHTML(){
+  return '<div class="axp-bracket">'+koOrder().map(ri=>{
+    const r=state.rounds[ri];
+    return '<div class="axp-round'+(r.short==='TP'?' axp-round-third':'')+'"><div class="axp-roundhead">'+r.name.toUpperCase()+'</div>'+
+      r.matches.map((m,mi)=>koMatchCard(m,ri,mi)).join('')+'</div>';
+  }).join('')+'</div>';
+}
 function renderKnockout(){
   const round=currentRound();
   let html='<div class="axp-eyebrow">KNOCKOUT STAGE · WIN OR GO HOME</div><h1 class="axp-title">The business end</h1>'+
     '<p class="axp-sub">Every knockout tie must produce a winner. Level after extra time goes to a penalty shootout.</p>'+
-    '<div class="axp-bracket">'+state.rounds.map((r,ri)=>
-      '<div class="axp-round"><div class="axp-roundhead">'+r.name.toUpperCase()+'</div>'+r.matches.map((m,mi)=>koMatchCard(m,ri,mi)).join('')+'</div>'
-    ).join('')+'</div>';
+    koBracketHTML();
   if(round&&round.matches.some(m=>!m.played)){
     html+='<p class="axp-note">Press SIMULATE on any tie to play it out. The next round opens once every tie in this round is done.</p>';
   }
@@ -2781,9 +2797,7 @@ function renderDone(){
   let html='<div class="axp-eyebrow">TOURNAMENT COMPLETE</div><h1 class="axp-title">'+champ.name+'</h1>'+
     '<p class="axp-sub">Champions of the Apex Cup.</p>'+
     (state.out?'<p class="axp-note axp-elimnote">'+(state.disqualified?'You forfeited a knockout tie and were disqualified — the remaining ties are played out one tie at a time.':'You were eliminated from this tournament — the remaining ties are played out one tie at a time.')+'</p>':'')+
-    '<div class="axp-bracket">'+state.rounds.map((r,ri)=>
-      '<div class="axp-round"><div class="axp-roundhead">'+r.name.toUpperCase()+'</div>'+r.matches.map((m,mi)=>koMatchCard(m,ri,mi)).join('')+'</div>'
-    ).join('')+'</div>'+
+    koBracketHTML()+
     '<div class="axp-continue"><button type="button" data-axp="replay">PLAY AGAIN</button> <button type="button" class="axp-ghost" data-axp="home">HOME</button></div>';
   $('axpStageBody').innerHTML=html;
   $('axpStageChip').textContent='CHAMPIONS';
@@ -3183,6 +3197,10 @@ function handleStageClick(e){
     const ri=parts[0],mi=parts[1];
     const m=state.rounds[ri]&&state.rounds[ri].matches[mi];
     if(!m||m.played)return;
+    if(state.rounds[ri].short==='F'&&state.rounds.some(r=>r.short==='TP'&&r.matches.some(x=>!x.played))){
+      if(window.pkToast)window.pkToast('PLAY THE THIRD-PLACE PLAYOFF FIRST');
+      return;
+    }
     if(m.a===state.selected||m.b===state.selected)playKo(ri,mi);
     else{simulateKo(m);afterMatch();}
     return;
@@ -3884,7 +3902,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='81';
+  const BUILD='82';
   let chip=null;
   function el(){
     if(chip)return chip;
