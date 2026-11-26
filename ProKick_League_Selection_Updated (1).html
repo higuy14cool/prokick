@@ -133,7 +133,7 @@
 <section id="pkGameTypes" class="pk-screen" hidden><button id="pkGameTypesBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">CHOOSE YOUR GAME</div><h1>Pick a game mode</h1><p>Choose how you want to play ProKick.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkClassicMatch"><span>🏟️</span><b>Classic Match</b><small>Play a full soccer match</small></button><button class="pk-mode" id="pkFutsal"><span>⚡</span><b>Futsal</b><small>Fast indoor soccer</small></button><button class="pk-mode" id="pkPenalties"><span>🥅</span><b>Penalties</b><small>Test your penalty skills</small></button></div></section>
 <section id="pkModes" class="pk-screen" hidden><button id="pkModesBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">CHOOSE YOUR MATCH</div><h1>How do you want to play?</h1><div class="pk-modecards"><button class="pk-mode selected" data-mode="1"><span>🧤</span><b>1 Player</b><small>Play against the computer</small></button><button class="pk-mode" data-mode="2"><span>🎮</span><b>2 Players</b><small>Play with a friend</small></button></div><button id="pkContinue" class="pk-bigbtn">CONTINUE →</button></section>
 <section id="pkOtherOptions" class="pk-screen" hidden><button id="pkOtherBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">OTHER</div><h1>Choose your match</h1><p>Friendly matches with any club, or a two-a-side tournament.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkFriendlyMatch" type="button"><span>🤝</span><b>Friendly Match</b><small>Classic Match, Futsal, or Penalties · all 13 clubs</small></button><button class="pk-mode" id="pkTwosTournament" type="button"><span>👥</span><b>2s Tournament</b><small>Elks, FC Chicken Wings and Argens · every tie 2v2 · drawn final goes to penalties</small></button></div></section>
-<section id="pkBazelOptions" class="pk-screen" hidden><button id="pkBazelBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">BAZEL LEAGUE</div><h1>Choose your competition</h1><p>Bazel League teams: FC Chicken Wings, Dragonwolves FC, Bears FC.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkSeasonMatch" type="button"><span>📅</span><b>Season Match</b><small>Classic Match, Futsal, or Penalties</small></button><button class="pk-mode" id="pkBazelTournament" type="button"><span>🏆</span><b>Bazel Tournament</b><small>Group stage, then the final</small></button></div></section>
+<section id="pkBazelOptions" class="pk-screen" hidden><button id="pkBazelBack" class="pk-back pk-corner-back">← Go Back</button><div class="pk-eyebrow">BAZEL LEAGUE</div><h1>Choose your competition</h1><p>Bazel League teams: FC Chicken Wings, Dragonwolves FC, Bears FC.</p><div class="pk-modecards pk-game-type-cards"><button class="pk-mode" id="pkSeasonMatch" type="button"><span>📅</span><b>Season</b><small>League season — most points wins</small></button><button class="pk-mode" id="pkBazelTournament" type="button"><span>🏆</span><b>Bazel Tournament</b><small>Group stage, then the final</small></button></div></section>
 <section id="pkSetup" class="pk-screen" hidden><button id="pkBack" class="pk-back pk-corner-back">← Go Back</button><button id="pkSetupStartMatch" class="pk-mode-start">▶ START MATCH</button><div class="pk-eyebrow">MATCH DAY</div><h1>Set up your match</h1><p>Pick your teams, then kick off.</p><div id="pkSetupPanel"></div><button id="pkStart" class="pk-bigbtn">START GAME ⚽</button></section>
 <section id="pkCountdown" class="pk-countdown" hidden><div class="pk-eyebrow">GET READY</div><div id="pkCountNum">3</div><p>Kick-off is coming...</p></section>
 <header class="topbar"><div class="brand"><div class="logo">⚽</div><div><h1>PROKICK</h1><small>THE BEAUTIFUL GAME</small></div></div><div class="status"><span class="dot"></span> 3D MATCH <span style="color:#5e9270">•</span> 4:00 GAME · POSSIBLE ADDED TIME</div></header>
@@ -2324,7 +2324,7 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
 /* Bracket */
 .axp-bracket{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
 @media(max-width:900px){.axp-bracket{grid-template-columns:1fr}.axp-round{margin-bottom:4px}}
-@media(min-width:901px){.axp-round-third{grid-column:3;margin-top:38px}}
+.axp-round-third{margin-top:38px;display:flex;flex-direction:column;gap:10px}
 .axp-round{display:flex;flex-direction:column;gap:10px}
 .axp-roundhead{font-size:9px;font-weight:950;letter-spacing:2px;color:#8fb59d;text-align:center;padding:2px 0 3px}
 .axp-match{background:#0e2418;border:1px solid #2c5039;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:7px}
@@ -2758,11 +2758,20 @@ function koOrder(){
   return state.rounds.map((r,i)=>i).sort((a,b)=>(rank[state.rounds[a].short]||0)-(rank[state.rounds[b].short]||0));
 }
 function koBracketHTML(){
-  return '<div class="axp-bracket">'+koOrder().map(ri=>{
+  const cell=ri=>{
     const r=state.rounds[ri];
-    return '<div class="axp-round'+(r.short==='TP'?' axp-round-third':'')+'"><div class="axp-roundhead">'+r.name.toUpperCase()+'</div>'+
-      r.matches.map((m,mi)=>koMatchCard(m,ri,mi)).join('')+'</div>';
-  }).join('')+'</div>';
+    return '<div class="axp-roundhead">'+r.name.toUpperCase()+'</div>'+r.matches.map((m,mi)=>koMatchCard(m,ri,mi)).join('');
+  };
+  const fIdx=state.rounds.findIndex(r=>r.short==='F');
+  const tIdx=state.rounds.findIndex(r=>r.short==='TP');
+  let html='<div class="axp-bracket">';
+  koOrder().forEach(ri=>{
+    // The third-place play-off lives inside the final's column, a little below it.
+    if(ri===tIdx&&fIdx>=0)return;
+    if(ri===fIdx&&tIdx>=0){html+='<div class="axp-round">'+cell(fIdx)+'<div class="axp-round-third">'+cell(tIdx)+'</div></div>';return;}
+    html+='<div class="axp-round">'+cell(ri)+'</div>';
+  });
+  return html+'</div>';
 }
 function renderKnockout(){
   const round=currentRound();
@@ -3242,6 +3251,7 @@ const $=id=>document.getElementById(P+id);
 const byId=id=>TEAMS.find(t=>t.id===id);
 const state={selected:null,phase:'setup',group:null,fin:null,champion:null,busy:false,out:false,disqualified:false};
 let gen=0,celebTimer=null,lastSkip=0;
+let season=!!cfg.seasonByDefault;
 
 const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 const rand=(min,max)=>Math.floor(Math.random()*(max-min+1))+min;
@@ -3266,6 +3276,14 @@ const mkMatch=(a,b)=>({a,b,sa:null,sb:null,penA:null,penB:null,winner:null,dq:fa
 
 /* ---------- SETUP ---------- */
 function renderSetup(){
+  const setTxt=(sel,txt)=>{const n=document.querySelector('#'+P+'Setup '+sel);if(n)n.textContent=txt;};
+  setTxt('.axp-eyebrow',season?'3 CLUBS · ONE LEAGUE TABLE':'3 CLUBS · ONE TROPHY');
+  setTxt('.axp-sub',season?'Pick the Bazel League club you will lead, then play out the season.':'Pick the Bazel League club you will lead, then enter the tournament.');
+  setTxt('.axp-note',season
+    ?'One group of three: you play both rivals and draws are allowed. The club with the most points is crowned Bazel League champion — no final, no shootout.'
+    :'One group of three: you play both rivals and draws are allowed. The top two meet again in the final, and a drawn final goes to extra time and a penalty shootout.');
+  const brand=document.querySelector('#'+P+'Root .axp-brand small');if(brand)brand.textContent=season?'BAZEL LEAGUE SEASON':cfg.title.toUpperCase();
+  $('StartBtn').textContent=season?'START SEASON ⚽':'ENTER TOURNAMENT ⚽';
   $('TeamGrid').innerHTML=TEAMS.map(t=>
     '<button type="button" class="axp-teambtn'+(state.selected===t.id?' selected':'')+'" data-team="'+t.id+'">'+
     badge(t)+'<b>'+t.name+'</b><small>OVR '+t.strength+'</small></button>').join('');
@@ -3293,6 +3311,19 @@ function finishGroup(){
   const rest=g.matches.find(m=>!m.played);
   if(rest){const [sa,sb]=simScore(byId(rest.a),byId(rest.b));rest.sa=sa;rest.sb=sb;rest.played=true;}
   g.done=true;
+  if(season)finishSeason();
+}
+/* Season: no knockout — the club top of the table takes the title. */
+function finishSeason(){
+  const g=state.group;
+  if(!g||!g.done)return;
+  const s=standings(g);
+  state.champion=s[0].id;
+  state.out=state.champion!==state.selected;
+  state.fin=null;
+  state.phase='done';
+  renderStage();
+  startCelebration(byId(state.champion));
 }
 function matchLine(m){
   const A=byId(m.a),B=byId(m.b);
@@ -3301,28 +3332,34 @@ function matchLine(m){
     '<span style="color:#5f8270">v</span><span class="axp-dot" style="background:'+B.color+';color:'+B.color+'"></span><span>'+B.short+'</span>'+
     (m.played?'<span class="axp-score">'+m.sa+' – '+m.sb+'</span>'+extra:'<span class="axp-score axp-pending">TO PLAY</span>')+'</div>';
 }
-function renderGroup(){
-  const g=state.group,s=standings(g);
+function tableHTML(g){
+  const s=standings(g);
+  const topN=season?1:2;
   const rows=s.map((r,i)=>{
     const t=byId(r.id);
-    const cls=[r.id===g.meId?'axp-userrow':'',g.done&&i<2?'axp-q':'',g.done&&i>1?'axp-out':''].filter(Boolean).join(' ');
+    const cls=[r.id===g.meId?'axp-userrow':'',g.done&&i<topN?'axp-q':'',g.done&&i>=topN?'axp-out':''].filter(Boolean).join(' ');
     return '<tr class="'+cls+'"><td class="axp-teamcol"><div class="axp-rowteam"><span class="axp-dot" style="background:'+t.color+';color:'+t.color+'"></span><span>'+t.name+'</span></div></td>'+
       '<td>'+r.p+'</td><td>'+r.w+'</td><td>'+r.d+'</td><td>'+r.l+'</td><td>'+r.gf+'</td><td class="axp-pts">'+r.pts+'</td></tr>';
   }).join('');
+  return '<table class="axp-table"><thead><tr><th class="axp-teamcol">TEAM</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>PTS</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
+function renderGroup(){
+  const g=state.group;
   const games=g.matches.map((m,idx)=>{
     const mine=!m.played&&!g.done&&(m.a===g.meId||m.b===g.meId);
     return matchLine(m)+(mine?'<button type="button" class="axp-playbtn" data-tour="playg:'+idx+'">▶ PLAY · '+byId(m.a).short+' vs '+byId(m.b).short+'</button>':'');
   }).join('');
-  let html='<div class="axp-eyebrow">GROUP STAGE · MATCHDAY</div><h1 class="axp-title">Road to the final</h1>'+
+  let html='<div class="axp-eyebrow">'+(season?'BAZEL LEAGUE · MATCHDAY':'GROUP STAGE · MATCHDAY')+'</div>'+
+    '<h1 class="axp-title">'+(season?'Road to the title':'Road to the final')+'</h1>'+
     '<p class="axp-sub">You play both rivals. Draws are allowed here — a level score simply stands, no shootout.</p>'+
     '<div class="axp-groups"><div class="axp-group'+(g.done?' axp-done':' axp-mine')+'">'+
-      '<div class="axp-grouphead"><b>GROUP STAGE</b><span class="axp-pill">'+(g.done?'COMPLETE':'IN PROGRESS')+'</span></div>'+
-      '<table class="axp-table"><thead><tr><th class="axp-teamcol">TEAM</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>PTS</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="axp-grouphead"><b>'+(season?'LEAGUE TABLE':'GROUP STAGE')+'</b><span class="axp-pill">'+(g.done?'COMPLETE':'IN PROGRESS')+'</span></div>'+
+      tableHTML(g)+
       '<div class="axp-groupgames">'+games+'</div></div></div>';
-  if(g.done)html+='<div class="axp-continue"><button type="button" data-tour="to-final">GO TO THE FINAL →</button></div>';
-  else html+='<p class="axp-note">Win or draw to keep your fate in your hands. The top two clubs of the group meet again in the final.</p>';
+  if(g.done&&!season)html+='<div class="axp-continue"><button type="button" data-tour="to-final">GO TO THE FINAL →</button></div>';
+  else if(!g.done)html+='<p class="axp-note">'+(season?'Most points wins the title. The club top of the table is crowned Bazel League champion — no final.':'Win or draw to keep your fate in your hands. The top two clubs of the group meet again in the final.')+'</p>';
   $('StageBody').innerHTML=html;
-  $('StageChip').textContent='GROUP STAGE';
+  $('StageChip').textContent=season?'BAZEL LEAGUE':'GROUP STAGE';
 }
 function finalCard(){
   const m=state.fin;
@@ -3349,6 +3386,16 @@ function renderFinal(){
 }
 function renderDone(){
   const champ=byId(state.champion);
+  if(season){
+    const shtml='<div class="axp-eyebrow">SEASON COMPLETE</div><h1 class="axp-title">'+champ.name+'</h1>'+
+      '<p class="axp-sub">'+(champ.id===state.selected?'Top of the table — you are the Bazel League champion.':'Top of the table — champions of the Bazel League.')+'</p>'+
+      (state.out?'<p class="axp-note axp-elimnote">You finished outside top spot — the title went to '+champ.name+'.</p>':'')+
+      tableHTML(state.group)+
+      '<div class="axp-continue"><button type="button" data-tour="replay">PLAY AGAIN</button> <button type="button" class="axp-ghost" data-tour="home">HOME</button></div>';
+    $('StageBody').innerHTML=shtml;
+    $('StageChip').textContent='CHAMPIONS';
+    return;
+  }
   let html='<div class="axp-eyebrow">TOURNAMENT COMPLETE</div><h1 class="axp-title">'+champ.name+'</h1>'+
     '<p class="axp-sub">'+cfg.champSub+'</p>'+
     (state.out?'<p class="axp-note axp-elimnote">'+(state.disqualified?'You forfeited the final and were disqualified.':'You were knocked out of this tournament.')+'</p>':'')+
@@ -3491,7 +3538,11 @@ function startCelebration(champ){
   window.pkCelebCrowd($('CrowdTop'));
   window.pkCelebCrowd($('CrowdBottom'));
   $('ChampName').textContent=champ.name;
-  $('ChampSub').textContent=champ.id===state.selected?cfg.winLine:cfg.champLine;
+  $('ChampSub').textContent=champ.id===state.selected
+    ?(season?'YOU ARE THE BAZEL LEAGUE CHAMPION!':cfg.winLine)
+    :(season?'CHAMPIONS OF THE BAZEL LEAGUE':cfg.champLine);
+  const kicker=$('Celebration')&&$('Celebration').querySelector('.axp-celebkicker');
+  if(kicker)kicker.textContent=season?'🏆 BAZEL LEAGUE CHAMPIONS 🏆':'🏆 '+cfg.title.toUpperCase()+' CHAMPIONS 🏆';
   $('Lift').innerHTML=window.pkLiftHTML(champ.color);
   lastSkip=0;
   $('SkipBtn').innerHTML='SKIP CELEBRATION<small>Double-press to return home</small>';
@@ -3550,7 +3601,7 @@ function pkBzlSave(){
   if(!APP_MODE)return;
   try{
     if(state.phase==='group'||state.phase==='final'){
-      localStorage.setItem(SAVE_KEY,JSON.stringify({v:1,savedAt:Date.now(),selected:state.selected,phase:state.phase,group:state.group,fin:state.fin,out:!!state.out,disqualified:!!state.disqualified}));
+      localStorage.setItem(SAVE_KEY,JSON.stringify({v:1,savedAt:Date.now(),selected:state.selected,phase:state.phase,season:!!season,group:state.group,fin:state.fin,out:!!state.out,disqualified:!!state.disqualified}));
     }else{
       localStorage.removeItem(SAVE_KEY);
     }
@@ -3566,6 +3617,7 @@ function pkBzlRestore(){
   if(!d.group||!Array.isArray(d.group.matches)||!Array.isArray(d.group.teams))return false;
   state.selected=d.selected;state.phase=d.phase;state.group=d.group;state.fin=d.fin||null;
   state.out=!!d.out;state.disqualified=!!d.disqualified;state.busy=false;
+  season=!!d.season;
   window[cfg.flag]=true;
   if(window.pkSyncResume)window.pkSyncResume();
   return true;
@@ -3633,12 +3685,13 @@ function initTournament(){
     $('SkipBtn').innerHTML='PRESS AGAIN TO SKIP<small>Double-press to return home</small>';
   });
   const card=document.getElementById(cfg.cardId);
-  if(card)card.addEventListener('click',e=>{e.preventDefault();openTournament();});
+  if(card)card.addEventListener('click',e=>{e.preventDefault();season=!!cfg.seasonByDefault;renderSetup();openTournament();});
   pkBzlRestore();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initTournament);
 else initTournament();
-return {open:openTournament,reset:resetTournament,resume:window[cfg.api.resume],restore:pkBzlRestore,save:pkBzlSave};
+return {open:openTournament,reset:resetTournament,resume:window[cfg.api.resume],restore:pkBzlRestore,save:pkBzlSave,
+  setSeason(v){season=!!v;renderSetup();return season;},isSeason(){return season;}};
 };
 /* --- instance 1: Bazel League, classic 11-a-side ties --- */
 window.pkBazelTournament=window.pkMakeTournament({
@@ -3864,7 +3917,11 @@ window.addEventListener('DOMContentLoaded',()=>{
     const b=event.target.closest('button');
     if(!b)return;
     if(b.id==='pkOtherLeague'){window.pkFriendly=true;show('pkOtherOptions');return;}
-    if(b.id==='pkSeasonMatch'){window.pkFriendly=false;if(eyebrow)eyebrow.textContent='CHOOSE YOUR GAME';show('pkGameTypes');return;}
+    if(b.id==='pkSeasonMatch'){
+      window.pkFriendly=false;
+      if(window.pkBazelTournament&&window.pkBazelTournament.setSeason){window.pkBazelTournament.setSeason(true);window.pkBazelTournament.open();}
+      return;
+    }
     if(b.id==='pkBazelBack'){window.pkFromBazel=false;show('pkLeagueSelect');return;}
     if(b.id==='pkOtherBack'){window.pkFriendly=false;show('pkLeagueSelect');return;}
     if(b.id==='pkFriendlyMatch'){
@@ -3899,7 +3956,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='82';
+  const BUILD='83';
   let chip=null;
   function el(){
     if(chip)return chip;
