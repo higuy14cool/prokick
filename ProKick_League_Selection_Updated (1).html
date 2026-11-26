@@ -2741,7 +2741,7 @@ function koMatchCard(m,ri,mi){
   if(!m.played){
     foot='<div class="axp-matchfoot"><button type="button" class="axp-simbtn" data-kmatch="'+ri+':'+mi+'">'+(mine?'▶ PLAY MATCH':'SIMULATE')+'</button></div>';
   }else{
-    foot='<div class="axp-matchfoot"><span class="axp-hint">'+(m.dq?'DISQUALIFIED · FORFEIT 0–3':(m.penA!=null?'WON ON PENALTIES':'FULL TIME'))+'</span></div>';
+    foot='<div class="axp-matchfoot"><span class="axp-hint">'+(m.dq?'DISQUALIFIED · FORFEIT 0–3':(m.penA!=null?'WON ON PENALTIES':'FULL TIME'))+(m.winner?' · '+byId(m.winner).name+(state.rounds[ri]&&state.rounds[ri].short==='F'?' WIN THE CUP':' ADVANCE'):'')+'</span></div>';
   }
   return '<div class="axp-match'+(mine?' axp-mine':'')+(m.played?' axp-finished':'')+'">'+
     row(A,sc?sc.a:'',m.winner===m.a)+row(B,sc?sc.b:'',m.winner===m.b)+foot+'</div>';
@@ -2754,10 +2754,7 @@ function renderKnockout(){
       '<div class="axp-round"><div class="axp-roundhead">'+r.name.toUpperCase()+'</div>'+r.matches.map((m,mi)=>koMatchCard(m,ri,mi)).join('')+'</div>'
     ).join('')+'</div>';
   if(round&&round.matches.some(m=>!m.played)){
-    const userPending=round.matches.some(m=>!m.played&&(m.a===state.selected||m.b===state.selected));
-    if(!userPending){
-      html+='<div class="axp-continue"><button type="button" data-axp="sim-round">SIMULATE '+round.name.toUpperCase()+'</button></div>';
-    }
+    html+='<p class="axp-note">Press SIMULATE on any tie to play it out. The next round opens once every tie in this round is done.</p>';
   }
   $('axpStageBody').innerHTML=html;
   $('axpStageChip').textContent=round?round.name.toUpperCase():'KNOCKOUTS';
@@ -2766,7 +2763,7 @@ function renderDone(){
   const champ=byId(state.champion);
   let html='<div class="axp-eyebrow">TOURNAMENT COMPLETE</div><h1 class="axp-title">'+champ.name+'</h1>'+
     '<p class="axp-sub">Champions of the Apex Cup.</p>'+
-    (state.out?'<p class="axp-note axp-elimnote">'+(state.disqualified?'You forfeited a knockout tie and were disqualified — the remaining ties were simulated.':'You were eliminated from this tournament — the remaining ties were simulated.')+'</p>':'')+
+    (state.out?'<p class="axp-note axp-elimnote">'+(state.disqualified?'You forfeited a knockout tie and were disqualified — the remaining ties are played out one tie at a time.':'You were eliminated from this tournament — the remaining ties are played out one tie at a time.')+'</p>':'')+
     '<div class="axp-bracket">'+state.rounds.map((r,ri)=>
       '<div class="axp-round"><div class="axp-roundhead">'+r.name.toUpperCase()+'</div>'+r.matches.map((m,mi)=>koMatchCard(m,ri,mi)).join('')+'</div>'
     ).join('')+'</div>'+
@@ -2793,25 +2790,29 @@ function advanceRound(){
     startCelebration(byId(state.champion));
     return;
   }
-  const winners=round.matches.map(m=>m.winner||(m.sa!==m.sb?(m.sa>m.sb?m.a:m.b):m.a));
-  const next=[];
-  for(let i=0;i<winners.length;i+=2)next.push(mkMatch(winners[i],winners[i+1]));
-  state.rounds.push({name:round.short==='QF'?'Semi-Finals':'Final',short:round.short==='QF'?'SF':'F',matches:next});
+  const winners=round.matches.map(m=>m.winner||m.a);
+  if(round.short==='QF'){
+    const next=[];
+    for(let i=0;i<winners.length;i+=2)next.push(mkMatch(winners[i],winners[i+1]));
+    state.rounds.push({name:'Semi-Finals',short:'SF',matches:next});
+  }else if(round.short==='SF'){
+    const losers=round.matches.map(m=>m.winner?(m.winner===m.a?m.b:m.a):m.b);
+    state.rounds.push({name:'Third-Place Playoff',short:'TP',matches:[mkMatch(losers[0],losers[1])]});
+    state.rounds.push({name:'Final',short:'F',matches:[mkMatch(winners[0],winners[1])]});
+  }
   state.roundIndex++;
   renderStage();
 }
-function autoFinishRound(){
-  const round=currentRound();
-  if(!round)return;
-  round.matches.forEach(m=>{if(!m.played&&!(m.a===state.selected||m.b===state.selected))simulateKo(m);});
-  if(round.matches.every(m=>m.played))advanceRound();
-  else renderStage();
-}
+function roundPlayed(){const r=currentRound();return !!r&&r.matches.every(m=>m.played);}
+function afterMatch(){if(roundPlayed())advanceRound();else renderStage();}
+function pkUserInPlay(){const r=currentRound();return !!(r&&r.matches.some(m=>m.a===state.selected||m.b===state.selected));}
 function simulateRound(){
   const round=currentRound();
   if(!round)return;
-  round.matches.forEach(m=>{if(!m.played)simulateKo(m);});
-  if(round.matches.every(m=>m.played))advanceRound(); else renderStage();
+  const m=round.matches.find(x=>!x.played);
+  if(!m)return;
+  simulateKo(m);
+  afterMatch();
 }
 function simRestOfTournament(){
   let guard=0;
@@ -3012,7 +3013,6 @@ async function playGroupMatch(gid,idx){
     if(idx>1)state.out=true;
   }
   renderStage();
-  if(state.out&&state.phase!=='done')simRestOfTournament();
 }
 async function playKo(ri,mi){
   if(state.busy)return;
@@ -3034,8 +3034,8 @@ async function playKo(ri,mi){
     if(res.disqualified){m.dq=true;state.disqualified=true;}
     if(res.winner&&res.winner!==state.selected)state.out=true;
     state.busy=false;
-    autoFinishRound();
-    if(state.out&&state.phase!=='done')simRestOfTournament();
+    afterMatch();
+    if(state.phase!=='done')state.out=!pkUserInPlay();
   }else{state.busy=false;}
 }
 
@@ -3181,7 +3181,7 @@ function handleStageClick(e){
     const m=state.rounds[ri]&&state.rounds[ri].matches[mi];
     if(!m||m.played)return;
     if(m.a===state.selected||m.b===state.selected)playKo(ri,mi);
-    else{simulateKo(m);autoFinishRound();}
+    else{simulateKo(m);afterMatch();}
     return;
   }
   const axp=e.target.closest('[data-axp]');
@@ -3881,7 +3881,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='80';
+  const BUILD='81';
   let chip=null;
   function el(){
     if(chip)return chip;
