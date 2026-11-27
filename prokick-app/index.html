@@ -2410,7 +2410,7 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
 .axp-celebkicker{font-size:clamp(10px,1.6vw,13px);font-weight:1000;letter-spacing:5px;color:#d9ff54;text-shadow:0 0 20px #d9ff5460}
 .axp-champname{font-size:clamp(30px,6.6vw,76px);line-height:.98;letter-spacing:-2.5px;margin:12px 0 6px;color:#fff;text-shadow:0 6px 30px #000,0 0 60px #d9ff5430}
 .axp-champsub{font-size:clamp(12px,2vw,17px);font-weight:900;letter-spacing:2.6px;color:#eaffb0;text-transform:uppercase}
-.axp-lift{display:flex;align-items:flex-end;justify-content:center;gap:clamp(4px,2vw,26px);margin:clamp(18px,3.5vh,40px) 0 10px;filter:drop-shadow(0 24px 30px #0009)}
+.axp-lift{display:flex;align-items:flex-end;justify-content:center;gap:clamp(4px,2vw,26px);margin:clamp(18px,3.5vh,40px) 0 10px;filter:drop-shadow(0 24px 30px #0009);animation:axpLiftCycle 5s ease-in-out 1.4s infinite}
 .axp-player{font-size:clamp(58px,11vw,120px);line-height:1;transform-origin:50% 90%;animation:axpJump .9s ease-in-out infinite alternate}
 .axp-player.one{animation-delay:.1s}
 .axp-player.two{animation-delay:.35s;transform:scaleX(-1)}
@@ -2433,8 +2433,12 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
 .axp-lifter .kit:after{content:attr(data-n);position:absolute;left:0;right:0;bottom:clamp(4px,.9vh,8px);text-align:center;font-size:clamp(8px,1.3vw,14px);font-weight:1000;color:#fff;text-shadow:0 1px 3px #000a}
 .axp-lifter .lg{display:flex;gap:clamp(3px,.7vw,8px)}
 .axp-lifter .lg i{display:block;width:clamp(8px,1.2vw,13px);height:clamp(14px,2.4vw,27px);border-radius:0 0 6px 6px;background:#0a1a11;box-shadow:inset 0 -4px 0 #00000055}
-.axp-lift .axp-cup{animation:axpCupRise 1.4s cubic-bezier(.2,1.4,.4,1) both,axpCupGlow 1.4s ease-in-out infinite alternate,axpCupBob 1.1s ease-in-out infinite alternate .9s}
+.axp-lift .axp-cup{animation:axpCupRise 1.4s cubic-bezier(.2,1.4,.4,1) both,axpCupGlow 1.4s ease-in-out infinite alternate}
 @keyframes axpCupBob{from{translate:0 0}to{translate:0 -18px}}
+/* One 5s cycle: pump the cup up and down, a silent count to three, then a two-second hoist. */
+@keyframes axpLiftCycle{0%{transform:translateY(0)}12%{transform:translateY(-14px)}24%{transform:translateY(0)}29%{transform:translateY(4px)}34%{transform:translateY(0)}39%{transform:translateY(4px)}44%{transform:translateY(0)}49%{transform:translateY(4px)}54%{transform:translateY(0)}58%{transform:translateY(-30px)}96%{transform:translateY(-30px)}100%{transform:translateY(0)}}
+.axp-backbracket{position:absolute;left:clamp(10px,2.5vw,26px);bottom:clamp(10px,2.5vw,26px);z-index:20;padding:12px 18px;border-radius:12px;background:#07150fe0;border:1px solid #ffffff45;color:#eafff0;font-size:11px;font-weight:950;letter-spacing:1px;backdrop-filter:blur(8px);box-shadow:0 8px 24px #0009;cursor:pointer}
+.axp-backbracket:hover{background:#12291ce0}
 @media(max-width:620px){.axp-topbar{gap:8px;padding:10px 12px}.axp-brand small{display:none}.axp-brand b{font-size:12px;letter-spacing:1.6px}.axp-stagechip{font-size:8px;padding:5px 8px}.axp-homebtn{padding:8px 10px;font-size:10px}.axp-title{letter-spacing:-1px}.axp-group-pick{gap:8px}.axp-group-btn{width:66px;height:62px;font-size:20px}}
 </style>
 <div id="apexRoot" hidden>
@@ -2474,6 +2478,7 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
       <div class="axp-lift"><span class="axp-player one">🧍‍♂️</span><span class="axp-cup">🏆</span><span class="axp-player two">🧍‍♂️</span></div>
       <div class="axp-champsub">THEY LIFT THE TROPHY TOGETHER</div>
     </div>
+    <button type="button" id="axpBackBracket" class="axp-backbracket">← RETURN TO BRACKET</button>
     <button type="button" id="axpSkipBtn" class="axp-skip">SKIP CELEBRATION<small>Double-press to return home</small></button>
   </div>
 </div>
@@ -2513,6 +2518,7 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
       <div class="axp-lift" id="bzlLift"></div>
       <div class="axp-champsub">THE WHOLE SQUAD LIFTS THE TROPHY TOGETHER</div>
     </div>
+    <button type="button" id="bzlBackBracket" class="axp-backbracket">← RETURN TO BRACKET</button>
     <button type="button" id="bzlSkipBtn" class="axp-skip">SKIP CELEBRATION<small>Double-press to return home</small></button>
   </div>
 </div>
@@ -2553,6 +2559,7 @@ document.querySelectorAll('.crest img[alt="Dragonwolves FC logo"]').forEach(img=
       <div class="axp-lift" id="twLift"></div>
       <div class="axp-champsub">THE WHOLE SQUAD LIFTS THE TROPHY TOGETHER</div>
     </div>
+    <button type="button" id="twBackBracket" class="axp-backbracket">← RETURN TO BRACKET</button>
     <button type="button" id="twSkipBtn" class="axp-skip">SKIP CELEBRATION<small>Double-press to return home</small></button>
   </div>
 </div>
@@ -3103,9 +3110,21 @@ function startCelebration(champ){
   $('axpStageChip').textContent='CHAMPIONS';
   startConfetti();
   clearTimeout(celebTimer);
-  celebTimer=setTimeout(()=>{if(!cel.hidden)goHome();},11000);
+  celebTimer=setTimeout(()=>{if(!cel.hidden)goHome();},16000);
+}
+function backToBracket(){
+  clearTimeout(celebTimer);stopConfetti();
+  const cel=$('axpCelebration');
+  if(cel){cel.hidden=true;cel.classList.remove('axp-shake');}
+  state.busy=false;
+  $('apexRoot').hidden=false;
+  $('axpSetup').hidden=true;$('axpStage').hidden=false;
+  document.body.classList.remove('pk-match');
+  renderStage();
+  $('axpStageChip').textContent='CHAMPIONS';
 }
 function initSkip(){
+  $('axpBackBracket').addEventListener('click',backToBracket);
   $('axpSkipBtn').addEventListener('click',()=>{
     const now=Date.now();
     if(now-lastSkip<750){goHome();return;}
@@ -3570,7 +3589,7 @@ function startCelebration(champ){
   cel.classList.add('axp-shake');
   window.pkConfettiStart($('Confetti'));
   clearTimeout(celebTimer);
-  celebTimer=setTimeout(()=>{if(!cel.hidden)goHome();},11000);
+  celebTimer=setTimeout(()=>{if(!cel.hidden)goHome();},16000);
 }
 
 /* ---------- HOME / RESTART ---------- */
@@ -3687,6 +3706,15 @@ function handleStageClick(e){
   else if(act==='replay')resetTournament();
   else if(act==='home')goHome();
 }
+function backToBracket(){
+  clearTimeout(celebTimer);window.pkConfettiStop();
+  const cel=$('Celebration');
+  if(cel){cel.hidden=true;cel.classList.remove('axp-shake');}
+  state.busy=false;
+  $('Root').hidden=false;$('Setup').hidden=true;$('Stage').hidden=false;
+  document.body.classList.remove('pk-match');
+  renderStage();
+}
 function initTournament(){
   renderSetup();
   $('HomeBtn').addEventListener('click',goHome);
@@ -3698,6 +3726,7 @@ function initTournament(){
     renderSetup();
   });
   $('StageBody').addEventListener('click',handleStageClick);
+  $('BackBracket').addEventListener('click',backToBracket);
   $('SkipBtn').addEventListener('click',()=>{
     const now=Date.now();
     if(now-lastSkip<750){goHome();return;}
@@ -3976,7 +4005,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Self-update: if the deployed build is newer than this page, offer a one-tap reload. */
 (function(){
-  const BUILD='84';
+  const BUILD='85';
   let chip=null;
   function el(){
     if(chip)return chip;
